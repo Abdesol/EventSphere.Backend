@@ -7,8 +7,16 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="AspNetCore.Authentication.Basic" Version="8.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.7" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.4" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\EventSphere.Application\EventSphere.Application.csproj" />
+    <ProjectReference Include="..\EventSphere.Domain\EventSphere.Domain.csproj" />
+    <ProjectReference Include="..\EventSphere.Infrastructure\EventSphere.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

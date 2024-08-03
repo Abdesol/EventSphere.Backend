@@ -10,6 +10,9 @@ Surface Notes App
 Packaging/bin
 Packaging/obj
 
+#asp.net
+tests.http
+
 # User-specific files
 *.rsuser
 *.suo
