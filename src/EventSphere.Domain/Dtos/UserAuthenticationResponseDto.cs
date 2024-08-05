@@ -1,6 +1,6 @@
 namespace EventSphere.Domain.Dtos;
 
-public class UserAuthenticationResponseDto
-{
-    
-}
+public record UserAuthenticationResponseDto(
+    string Token,
+    bool IsAuthenticated
+);

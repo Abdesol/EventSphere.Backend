@@ -32,10 +32,28 @@ public class AccountService(JwtHandler jwtHandler, ApplicationDbContext appDbCon
             Username = userRegistrationRequestDto.Username,
             Email = userRegistrationRequestDto.Email,
             PasswordHash = passwordHash,
-            Role = Role.User
+            Role = userRegistrationRequestDto.IsEventOrganizer ? Role.EventOrganizer : Role.User
         });
         await appDbContext.SaveChangesAsync();
 
         return user.Entity;
+    }
+    
+    public async Task<UserAuthenticationResponseDto?> Authenticate(UserAuthenticationRequestDto userAuthenticationRequestDto)
+    {
+        var user = await appDbContext.Users.AsNoTracking().FirstOrDefaultAsync(x => x.Email == userAuthenticationRequestDto.Email);
+        if (user == null)
+        {
+            return null;
+        }
+
+        var isPasswordValid = HashHelper.Verify(userAuthenticationRequestDto.Password, user.PasswordHash!);
+        if (!isPasswordValid)
+        {
+            return null;
+        }
+
+        var token = jwtHandler.CreateToken(user);
+        return new UserAuthenticationResponseDto(token, true);
     }
 }

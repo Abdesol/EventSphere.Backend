@@ -1,6 +1,4 @@
 namespace EventSphere.Domain.Dtos;
 
-public class UserLogoutRequestDto
-{
-    
-}
+public record UserLogoutRequestDto(
+    string Token);
