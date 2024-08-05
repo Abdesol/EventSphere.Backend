@@ -5,10 +5,9 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
     </PropertyGroup>
-
+    
     <ItemGroup>
-      <ProjectReference Include="..\EventSphere.Common\EventSphere.Common.csproj" />
-      <ProjectReference Include="..\EventSphere.Infrastructure\EventSphere.Infrastructure.csproj" />
+        <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
     </ItemGroup>
 
 </Project>

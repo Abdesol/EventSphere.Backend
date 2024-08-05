@@ -1,6 +1,9 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace EventSphere.Domain.Dtos;
 
-public class UserRegistrationResponseDto
-{
-    
-}
+public record UserRegistrationResponseDto(
+    int Id,
+    [Required] string Email,
+    [Required] string Username
+    );

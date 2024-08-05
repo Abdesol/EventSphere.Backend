@@ -12,7 +12,5 @@ public class User
 
     public string Role { get; set; } = Enums.Role.User;
     
-    public byte[] PasswordHash { get; set; } = null!;
-    
-    public byte[] PasswordSalt { get; set; } = null!;
+    public string? PasswordHash { get; set; }
 }

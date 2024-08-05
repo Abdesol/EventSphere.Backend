@@ -1,6 +1,13 @@
+using EventSphere.Domain.Dtos;
+using EventSphere.Domain.Entities;
+
 namespace EventSphere.Application.Services.Interfaces;
 
 public interface IAccountService
 {
+    public Task<bool> IsThereSimilarUsernames(string username);
     
+    public Task<bool> IsThereSimilarEmails(string email);
+    
+    public Task<User> Register(UserRegistrationRequestDto userRegistrationRequestDto);
 }
