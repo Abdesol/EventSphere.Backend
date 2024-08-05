@@ -1,13 +1,19 @@
 using System.Text;
+using DotNetEnv;
 using EventSphere.Api.Configuration;
 using EventSphere.Application.Services;
 using EventSphere.Application.Services.Interfaces;
+using EventSphere.Infrastructure.Data;
 using EventSphere.Infrastructure.Security;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 var config = builder.Configuration;
+
+Env.Load();
+config.AddEnvironmentVariables();
 
 // jwt authentication
 builder.Services.AddAuthentication(x =>
@@ -31,10 +37,18 @@ builder.Services.AddAuthentication(x =>
     };
 });
 
+
+builder.Services.AddDbContext<ApplicationDbContext>((serviceProvider, optionsBuilder) =>
+{
+    var connString = Environment.GetEnvironmentVariable("POSTGRES_DB_CONNECTION_STRING");
+    optionsBuilder.UseNpgsql(connString);
+    
+});
+
 builder.Services.AddCors(CorsConfig.CorsPolicyConfig);
 
 builder.Services.AddSingleton<JwtHandler>(); // jwt auth
-builder.Services.AddSingleton<IAuthenticationService, AuthenticationService>();
+builder.Services.AddScoped<IAccountService, AccountService>();
 
 builder.Services.AddControllers();
 
