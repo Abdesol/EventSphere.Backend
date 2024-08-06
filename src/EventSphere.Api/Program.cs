@@ -34,8 +34,7 @@ builder.Services.AddAuthentication(x =>
         {
             ValidIssuer = config["JwtSettings:Issuer"],
             ValidAudience = config["JwtSettings:Audience"],
-            IssuerSigningKey =
-                new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JWT_SECRET_KEY")!)),
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["JWT_SECRET_KEY"]!)),
             ValidateIssuer = true,
             ValidateAudience = true,
             ValidateLifetime = true,
@@ -46,8 +45,8 @@ builder.Services.AddAuthentication(x =>
     .AddCookie()
     .AddGoogle("GoogleLogin", options =>
     {
-        options.ClientId = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_ID")!;
-        options.ClientSecret = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_SECRET")!;
+        options.ClientId = config["GOOGLE_CLIENT_ID"]!;
+        options.ClientSecret = config["GOOGLE_CLIENT_SECRET"]!;
         options.SaveTokens = false;
         options.Scope.Add("email");
     });
@@ -55,7 +54,7 @@ builder.Services.AddAuthentication(x =>
 
 builder.Services.AddDbContext<ApplicationDbContext>((serviceProvider, optionsBuilder) =>
 {
-    var connString = Environment.GetEnvironmentVariable("POSTGRES_DB_CONNECTION_STRING");
+    var connString = config["POSTGRES_DB_CONNECTION_STRING"];
     optionsBuilder.UseNpgsql(connString);
 });
 builder.Services.AddCors(CorsConfig.CorsPolicyConfig);
