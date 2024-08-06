@@ -25,20 +25,27 @@ public class AccountService(JwtHandler jwtHandler, ApplicationDbContext appDbCon
     
     public async Task<User> Register(UserRegistrationRequestDto userRegistrationRequestDto, bool isOAuth = false, string oAuthClient = "")
     {
-        var passwordHash = HashHelper.Hash(userRegistrationRequestDto.Password);
-
-        var user = await appDbContext.Users.AddAsync(new User
+        var user = new User
         {
             Username = userRegistrationRequestDto.Username,
             Email = userRegistrationRequestDto.Email,
-            PasswordHash = passwordHash,
             Role = userRegistrationRequestDto.IsEventOrganizer ? Role.EventOrganizer : Role.User,
-            IsOAuth = isOAuth,
-            OAuthClient = isOAuth ? oAuthClient : ""
-        });
+            IsOAuth = isOAuth
+        };
+
+        if (!isOAuth)
+        {
+            user.PasswordHash = HashHelper.Hash(userRegistrationRequestDto.Password);
+        }
+        else
+        {
+            user.OAuthClient = oAuthClient;
+        }
+
+        var userEntry = await appDbContext.Users.AddAsync(user);
         await appDbContext.SaveChangesAsync();
 
-        return user.Entity;
+        return userEntry.Entity;
     }
     
     public async Task<UserAuthenticationResponseDto?> Authenticate(UserAuthenticationRequestDto userAuthenticationRequestDto, bool isOAuth = false)
@@ -62,8 +69,14 @@ public class AccountService(JwtHandler jwtHandler, ApplicationDbContext appDbCon
         return new UserAuthenticationResponseDto(token, true);
     }
 
-    public Task<User?> GetUserByEmail(string email)
+    public async Task<User?> GetUserByEmail(string email)
     {
-        return appDbContext.Users.AsNoTracking().FirstOrDefaultAsync(x => x.Email == email);
+        return await appDbContext.Users.AsNoTracking().FirstOrDefaultAsync(x => x.Email == email);
+    }
+    
+    public async Task<bool> IsUserRegisteredWithOAuth(string email)
+    {
+        var user = await appDbContext.Users.AsNoTracking().FirstOrDefaultAsync(x => x.Email == email);
+        return user != null && user.IsOAuth;
     }
 }

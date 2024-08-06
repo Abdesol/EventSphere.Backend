@@ -49,7 +49,6 @@ builder.Services.AddAuthentication(x =>
         options.ClientId = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_ID")!;
         options.ClientSecret = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_SECRET")!;
         options.SaveTokens = false;
-        // options.CallbackPath = "/signin-google";
         options.Scope.Add("email");
     });
 

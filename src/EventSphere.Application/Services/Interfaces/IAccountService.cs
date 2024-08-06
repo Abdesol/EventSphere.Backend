@@ -14,4 +14,6 @@ public interface IAccountService
     public Task<UserAuthenticationResponseDto?> Authenticate(UserAuthenticationRequestDto userAuthenticationRequestDto, bool isOAuth = false);
     
     public Task<User?> GetUserByEmail(string email);
+
+    public Task<bool> IsUserRegisteredWithOAuth(string email);
 }
