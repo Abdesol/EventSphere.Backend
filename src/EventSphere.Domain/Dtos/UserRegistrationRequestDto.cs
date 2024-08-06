@@ -8,5 +8,5 @@ namespace EventSphere.Domain.Dtos;
 public record UserRegistrationRequestDto(
     [Required] [MaxLength(50)] [EmailAddress] string Email,
     [Required] [MinLength(3)] [MaxLength(10)] [Alphanumeric] string Username,
-    [Required] [MinLength(8)]  [MaxLength(32)] [PasswordPropertyText] string Password,
+    [Required] [MaxLength(32)] [PasswordPropertyText] string Password,
     bool IsEventOrganizer = false);

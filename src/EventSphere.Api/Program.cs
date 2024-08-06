@@ -6,6 +6,8 @@ using EventSphere.Application.Services;
 using EventSphere.Application.Services.Interfaces;
 using EventSphere.Infrastructure.Data;
 using EventSphere.Infrastructure.Security;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -19,33 +21,43 @@ config.AddEnvironmentVariables();
 
 // jwt authentication
 builder.Services.AddAuthentication(x =>
-{
-    x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-    x.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-}).AddJwtBearer(x =>
-{
-    x.RequireHttpsMetadata = false;
-    x.SaveToken = true;
-    x.TokenValidationParameters = new TokenValidationParameters()
     {
-        ValidIssuer = config["JwtSettings:Issuer"],
-        ValidAudience = config["JwtSettings:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JWT_SECRET_KEY")!)),
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        ClockSkew = TimeSpan.Zero
-    };
-});
+        x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        x.DefaultChallengeScheme = GoogleDefaults.AuthenticationScheme;
+        x.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+        x.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    }).AddJwtBearer(x =>
+    {
+        x.RequireHttpsMetadata = false;
+        x.SaveToken = true;
+        x.TokenValidationParameters = new TokenValidationParameters()
+        {
+            ValidIssuer = config["JwtSettings:Issuer"],
+            ValidAudience = config["JwtSettings:Audience"],
+            IssuerSigningKey =
+                new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JWT_SECRET_KEY")!)),
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ClockSkew = TimeSpan.Zero
+        };
+    })
+    .AddCookie()
+    .AddGoogle("GoogleLogin", options =>
+    {
+        options.ClientId = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_ID")!;
+        options.ClientSecret = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_SECRET")!;
+        options.SaveTokens = false;
+        // options.CallbackPath = "/signin-google";
+        options.Scope.Add("email");
+    });
 
 
 builder.Services.AddDbContext<ApplicationDbContext>((serviceProvider, optionsBuilder) =>
 {
     var connString = Environment.GetEnvironmentVariable("POSTGRES_DB_CONNECTION_STRING");
     optionsBuilder.UseNpgsql(connString);
-    
 });
 builder.Services.AddCors(CorsConfig.CorsPolicyConfig);
 

@@ -13,4 +13,8 @@ public class User
     public string Role { get; set; } = Enums.Role.User;
     
     public string? PasswordHash { get; set; }
+    
+    public bool IsOAuth { get; set; }
+    
+    public string? OAuthClient { get; set; }
 }

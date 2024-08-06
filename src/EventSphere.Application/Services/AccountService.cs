@@ -23,7 +23,7 @@ public class AccountService(JwtHandler jwtHandler, ApplicationDbContext appDbCon
         return user != null;
     }
     
-    public async Task<User> Register(UserRegistrationRequestDto userRegistrationRequestDto)
+    public async Task<User> Register(UserRegistrationRequestDto userRegistrationRequestDto, bool isOAuth = false, string oAuthClient = "")
     {
         var passwordHash = HashHelper.Hash(userRegistrationRequestDto.Password);
 
@@ -32,14 +32,16 @@ public class AccountService(JwtHandler jwtHandler, ApplicationDbContext appDbCon
             Username = userRegistrationRequestDto.Username,
             Email = userRegistrationRequestDto.Email,
             PasswordHash = passwordHash,
-            Role = userRegistrationRequestDto.IsEventOrganizer ? Role.EventOrganizer : Role.User
+            Role = userRegistrationRequestDto.IsEventOrganizer ? Role.EventOrganizer : Role.User,
+            IsOAuth = isOAuth,
+            OAuthClient = isOAuth ? oAuthClient : ""
         });
         await appDbContext.SaveChangesAsync();
 
         return user.Entity;
     }
     
-    public async Task<UserAuthenticationResponseDto?> Authenticate(UserAuthenticationRequestDto userAuthenticationRequestDto)
+    public async Task<UserAuthenticationResponseDto?> Authenticate(UserAuthenticationRequestDto userAuthenticationRequestDto, bool isOAuth = false)
     {
         var user = await appDbContext.Users.AsNoTracking().FirstOrDefaultAsync(x => x.Email == userAuthenticationRequestDto.Email);
         if (user == null)
@@ -47,13 +49,21 @@ public class AccountService(JwtHandler jwtHandler, ApplicationDbContext appDbCon
             return null;
         }
 
-        var isPasswordValid = HashHelper.Verify(userAuthenticationRequestDto.Password, user.PasswordHash!);
-        if (!isPasswordValid)
+        if (!isOAuth)
         {
-            return null;
+            var isPasswordValid = HashHelper.Verify(userAuthenticationRequestDto.Password, user.PasswordHash!);
+            if (!isPasswordValid)
+            {
+                return null;
+            }
         }
 
         var token = jwtHandler.CreateToken(user);
         return new UserAuthenticationResponseDto(token, true);
+    }
+
+    public Task<User?> GetUserByEmail(string email)
+    {
+        return appDbContext.Users.AsNoTracking().FirstOrDefaultAsync(x => x.Email == email);
     }
 }

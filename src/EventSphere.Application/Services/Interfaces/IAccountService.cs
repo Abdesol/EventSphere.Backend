@@ -9,7 +9,9 @@ public interface IAccountService
     
     public Task<bool> IsThereSimilarEmails(string email);
     
-    public Task<User> Register(UserRegistrationRequestDto userRegistrationRequestDto);
+    public Task<User> Register(UserRegistrationRequestDto userRegistrationRequestDto, bool isOAuth = false, string oAuthClient = "");
     
-    public Task<UserAuthenticationResponseDto?> Authenticate(UserAuthenticationRequestDto userAuthenticationRequestDto);
+    public Task<UserAuthenticationResponseDto?> Authenticate(UserAuthenticationRequestDto userAuthenticationRequestDto, bool isOAuth = false);
+    
+    public Task<User?> GetUserByEmail(string email);
 }
