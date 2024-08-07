@@ -15,23 +15,21 @@ public class AccountsControllerTests
 {
     private readonly AccountsController _controller;
     private readonly Mock<IAccountService> _mockAccountService;
-    private readonly Mock<ITokenBlacklistService> _mockTokenBlacklistService;
-    private readonly Mock<IConfiguration> _mockConfiguration;
 
     public AccountsControllerTests()
     {
         _mockAccountService = new Mock<IAccountService>();
-        _mockTokenBlacklistService = new Mock<ITokenBlacklistService>();
-        _mockConfiguration = new Mock<IConfiguration>();
+        var mockTokenBlacklistService = new Mock<ITokenBlacklistService>();
+        var mockConfiguration = new Mock<IConfiguration>();
 
         var mockJwtExpiryInMinutesConfig = new Mock<IConfigurationSection>();
         mockJwtExpiryInMinutesConfig.Setup(x => x.Value).Returns("60");
-        _mockConfiguration.Setup(x => x.GetSection("Jwt:ExpiryInMinutes")).Returns(mockJwtExpiryInMinutesConfig.Object);
+        mockConfiguration.Setup(x => x.GetSection("Jwt:ExpiryInMinutes")).Returns(mockJwtExpiryInMinutesConfig.Object);
 
         _controller = new AccountsController(
             _mockAccountService.Object,
-            _mockTokenBlacklistService.Object,
-            _mockConfiguration.Object
+            mockTokenBlacklistService.Object,
+            mockConfiguration.Object
         );
     }
 

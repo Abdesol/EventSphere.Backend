@@ -27,7 +27,7 @@ public class JwtHandler(IConfiguration configuration)
     /// <returns>
     /// The plain JWT token
     /// </returns>
-    public string CreateToken(User user)
+    public virtual string CreateToken(User user)
     {
         var signingCredentials = GetSigningCredentials();
         var claims = GetClaims(user);
