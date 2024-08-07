@@ -48,7 +48,7 @@ public class AccountsController(
         var isThereSimilarEmail = await accountService.IsThereSimilarEmails(userRegistrationRequestDto.Email);
         if (isThereSimilarEmail)
         {
-            return Unauthorized("Email is already taken.");
+            return BadRequest("Email is already taken.");
         }
 
         var user = await accountService.Register(userRegistrationRequestDto);
