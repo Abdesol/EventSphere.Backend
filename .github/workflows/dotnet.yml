@@ -21,8 +21,8 @@ jobs:
       with:
         dotnet-version: 8.0.x
     - name: Restore dependencies
-      run: dotnet restore EventSphere.Tests/EventSphere.Tests.csproj
+      run: dotnet restore src/EventSphere.Tests/EventSphere.Tests.csproj
     - name: Build
-      run: dotnet build EventSphere.Tests/EventSphere.Tests.csproj --no-restore
+      run: dotnet build src/EventSphere.Tests/EventSphere.Tests.csproj --no-restore
     - name: Test
-      run: dotnet test EventSphere.Tests/EventSphere.Tests.csproj --no-build --verbosity normal
+      run: dotnet test src/EventSphere.Tests/EventSphere.Tests.csproj --no-build --verbosity normal
