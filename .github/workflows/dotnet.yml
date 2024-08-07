@@ -1,0 +1,28 @@
+# This workflow will build a .NET project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
+
+name: EventSphere.Backend
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 8.0.x
+    - name: Restore dependencies
+      run: dotnet restore EventSphere.Tests/EventSphere.Tests.csproj
+    - name: Build
+      run: dotnet build EventSphere.Tests/EventSphere.Tests.csproj --no-restore
+    - name: Test
+      run: dotnet test EventSphere.Tests/EventSphere.Tests.csproj --no-build --verbosity normal
