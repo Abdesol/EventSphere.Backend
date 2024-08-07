@@ -3,6 +3,12 @@ using EventSphere.Application.Services.Interfaces;
 
 namespace EventSphere.Api.Middlewares;
 
+/// <summary>
+/// Middleware to check if the token is blacklisted.
+/// </summary>
+/// <param name="blacklistService">
+/// The service to check if the token is blacklisted.
+/// </param>
 public class TokenBlacklistMiddleware(ITokenBlacklistService blacklistService) : IMiddleware
 {
     public async Task InvokeAsync(HttpContext context, RequestDelegate next)

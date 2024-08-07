@@ -1,5 +1,8 @@
 namespace EventSphere.Domain.Enums;
 
+/// <summary>
+/// Enum of the users' roles
+/// </summary>
 public static class Role
 {
     public const string User = "User";

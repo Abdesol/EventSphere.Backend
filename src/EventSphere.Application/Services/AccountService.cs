@@ -11,18 +11,21 @@ namespace EventSphere.Application.Services;
 
 public class AccountService(JwtHandler jwtHandler, ApplicationDbContext appDbContext) : IAccountService
 {
+    /// <inheritdoc />
     public async Task<bool> IsThereSimilarUsernames(string username)
     {
         var user = await appDbContext.Users.AsNoTracking().FirstOrDefaultAsync(x => x.Username == username);
         return user != null;
     }
     
+    /// <inheritdoc />
     public async Task<bool> IsThereSimilarEmails(string email)
     {
         var user = await appDbContext.Users.AsNoTracking().FirstOrDefaultAsync(x => x.Email == email);
         return user != null;
     }
     
+    /// <inheritdoc />
     public async Task<User> Register(UserRegistrationRequestDto userRegistrationRequestDto, bool isOAuth = false, string oAuthClient = "")
     {
         var user = new User
@@ -48,6 +51,7 @@ public class AccountService(JwtHandler jwtHandler, ApplicationDbContext appDbCon
         return userEntry.Entity;
     }
     
+    /// <inheritdoc />
     public async Task<UserAuthenticationResponseDto?> Authenticate(UserAuthenticationRequestDto userAuthenticationRequestDto, bool isOAuth = false)
     {
         var user = await appDbContext.Users.AsNoTracking().FirstOrDefaultAsync(x => x.Email == userAuthenticationRequestDto.Email);
@@ -69,11 +73,13 @@ public class AccountService(JwtHandler jwtHandler, ApplicationDbContext appDbCon
         return new UserAuthenticationResponseDto(token, true);
     }
 
+    /// <inheritdoc />
     public async Task<User?> GetUserByEmail(string email)
     {
         return await appDbContext.Users.AsNoTracking().FirstOrDefaultAsync(x => x.Email == email);
     }
     
+    /// <inheritdoc />
     public async Task<bool> IsUserRegisteredWithOAuth(string email)
     {
         var user = await appDbContext.Users.AsNoTracking().FirstOrDefaultAsync(x => x.Email == email);

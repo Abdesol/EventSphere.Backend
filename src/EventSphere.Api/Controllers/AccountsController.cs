@@ -11,6 +11,18 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace EventSphere.Api.Controllers;
 
+/// <summary>
+/// Controller for account operations.
+/// </summary>
+/// <param name="accountService">
+/// Service for account operations.
+/// </param>
+/// <param name="tokenBlacklistService">
+/// Service for token blacklist operations.
+/// </param>
+/// <param name="configuration">
+/// Configuration for the application.
+/// </param>
 [ApiController]
 [Route("[controller]")]
 public class AccountsController(
@@ -21,6 +33,9 @@ public class AccountsController(
     private readonly TimeSpan _tokenExpiration =
         TimeSpan.FromMinutes(configuration.GetValue<int>("Jwt:ExpiryInMinutes"));
 
+    /// <summary>
+    /// Endpoint to register a new user.
+    /// </summary>
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] UserRegistrationRequestDto userRegistrationRequestDto)
     {
@@ -41,6 +56,9 @@ public class AccountsController(
         return Created("", user.ToUserRegistrationResponseDto());
     }
 
+    /// <summary>
+    /// Endpoint to authenticate a user.
+    /// </summary>
     [HttpPost("authenticate")]
     public async Task<IActionResult> Authenticate([FromBody] UserAuthenticationRequestDto userAuthenticationRequestDto)
     {
@@ -59,6 +77,9 @@ public class AccountsController(
         return Ok(response);
     }
 
+    /// <summary>
+    /// An endpoint protected with jwt authorization to logout a user.
+    /// </summary>
     [Authorize]
     [HttpPost("logout")]
     public IActionResult Logout()
@@ -68,6 +89,9 @@ public class AccountsController(
         return Ok();
     }
 
+    /// <summary>
+    /// An endpoint to sign in with google.
+    /// </summary>
     [HttpGet("google-signin")]
     public IActionResult GoogleSignIn()
     {
@@ -75,6 +99,9 @@ public class AccountsController(
         return Challenge(props, "GoogleLogin");
     }
 
+    /// <summary>
+    /// An endpoint to handle google response.
+    /// </summary>
     [HttpGet("google-response")]
     public async Task<IActionResult> GoogleResponse()
     {
