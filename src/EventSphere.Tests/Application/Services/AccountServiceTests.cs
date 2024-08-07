@@ -28,9 +28,10 @@ public class AccountServiceTests
         
         _mockJwtHandler.Setup(x => x.CreateToken(It.IsAny<User>()))
             .Returns(string.Empty);
-
+        
+        var uniqueDatabaseName = Guid.NewGuid().ToString();
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
-            .UseInMemoryDatabase(databaseName: "TestDatabase")
+            .UseInMemoryDatabase(databaseName: uniqueDatabaseName)
             .Options;
         _appDbContext = new ApplicationDbContext(options);
         SeedDatabase();
