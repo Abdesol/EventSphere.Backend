@@ -32,6 +32,30 @@ public class AccountsControllerTests
             mockConfiguration.Object
         );
     }
+    
+    [Fact]
+    public void GetUser_WhenEventIsNotFound_ReturnsBadRequest()
+    {
+        _mockAccountService.Setup(x => x.GetUserById(It.IsAny<int>()))
+            .ReturnsAsync((User)null!);
+
+        var result = _controller.GetUser(It.IsAny<int>()).Result;
+
+        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
+        Assert.Equal(400, badRequestResult.StatusCode);
+    }
+
+    [Fact]
+    public void GetUser_WhenEventIsFound_ReturnsOk()
+    {
+        _mockAccountService.Setup(x => x.GetUserById(It.IsAny<int>()))
+            .ReturnsAsync(new User());
+
+        var result = _controller.GetUser(It.IsAny<int>()).Result;
+
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        Assert.Equal(200, okResult.StatusCode);
+    }
 
     [Fact]
     public void Register_WhenUsernameIsAlreadyTaken_ReturnsBadRequest()
