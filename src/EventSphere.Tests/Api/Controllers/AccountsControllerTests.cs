@@ -130,7 +130,7 @@ public class AccountsControllerTests
     public void Authenticate_WhenUserProvidedCorrectCredentials_ReturnsOk()
     {
         var userDto = new UserAuthenticationRequestDto("test@gmail.com", "");
-        var userResponseDto = new UserAuthenticationResponseDto("Token", true);
+        var userResponseDto = new UserAuthenticationResponseDto("Token", true, 0);
 
         _mockAccountService.Setup(x => x.IsUserRegisteredWithOAuth(userDto.Email))
             .ReturnsAsync(false);
@@ -156,5 +156,47 @@ public class AccountsControllerTests
         var result = _controller.Logout();
         var okResult = Assert.IsType<OkResult>(result);
         Assert.Equal(200, okResult.StatusCode);
+    }
+
+    [Fact]
+    public async void PromoteToEventOrganizer_WhenUserDoesNotExist_ReturnsBadRequest()
+    {
+        var userId = 0;
+        _mockAccountService.Setup(x => x.DoesUserExist(userId))
+            .ReturnsAsync(false);
+
+        var result = await _controller.PromoteToEventOrganizer(userId);
+        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
+        Assert.Equal(400, badRequestResult.StatusCode);
+    }
+    
+    [Fact]
+    public async void PromoteToEventOrganizer_WhenUserIsAlreadyAnEventOrganizer_ReturnsBadRequest()
+    {
+        var userId = 0;
+        _mockAccountService.Setup(x => x.DoesUserExist(userId))
+            .ReturnsAsync(true);
+        _mockAccountService.Setup(x => x.IsUserAlreadyAnEventOrganizer(userId))
+            .ReturnsAsync(true);
+
+        var result = await _controller.PromoteToEventOrganizer(userId);
+        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
+        Assert.Equal(400, badRequestResult.StatusCode);
+    }
+    
+    [Fact]
+    public async void PromoteToEventOrganizer_WhenUpdateRoleIsNotSuccessful_ReturnsUnprocessableEntity()
+    {
+        var userId = 0;
+        _mockAccountService.Setup(x => x.DoesUserExist(userId))
+            .ReturnsAsync(true);
+        _mockAccountService.Setup(x => x.IsUserAlreadyAnEventOrganizer(userId))
+            .ReturnsAsync(false);
+        _mockAccountService.Setup(x => x.PromoteToEventOrganizer(userId))
+            .ReturnsAsync(false);
+
+        var result = await _controller.PromoteToEventOrganizer(userId);
+        var unprocessableEntityResult = Assert.IsType<UnprocessableEntityObjectResult>(result);
+        Assert.Equal(422, unprocessableEntityResult.StatusCode);
     }
 }
