@@ -64,4 +64,21 @@ public interface IAccountService
     /// The user entity.
     /// </returns>
     public Task<bool> IsUserRegisteredWithOAuth(string email);
+
+    /// <summary>
+    /// A method to check if a user exists by id
+    /// </summary>
+    /// <returns>true if it exists, otherwise, false</returns>
+    public Task<bool> DoesUserExist(int id);
+    
+    /// <summary>
+    /// A method to check if a user is already an event organizer or not
+    /// </summary>
+    public Task<bool> IsUserAlreadyAnEventOrganizer(int id);
+
+    /// <summary>
+    /// A method to promote a user from normal user to event organizer
+    /// </summary>
+    /// <returns>true if successful otherwise false</returns>
+    public Task<bool> PromoteToEventOrganizer(int id);
 }

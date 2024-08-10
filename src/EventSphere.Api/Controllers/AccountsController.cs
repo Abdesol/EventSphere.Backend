@@ -143,4 +143,32 @@ public class AccountsController(
 
         return Ok(response);
     }
+    
+    /// <summary>
+    /// An endpoint to promote a user to event organizer.
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns></returns>
+    [Authorize]
+    [HttpGet("promote-to-event-organizer/{id:int}")]
+    public async Task<IActionResult> PromoteToEventOrganizer(int id)
+    {
+        if (!await accountService.DoesUserExist(id))
+        {
+            return BadRequest("User id does not exist.");
+        }
+        
+        if (await accountService.IsUserAlreadyAnEventOrganizer(id))
+        {
+            return BadRequest("User is already an event organizer");
+        }
+
+        var updateRoleSuccessful = await accountService.PromoteToEventOrganizer(id);
+        if (!updateRoleSuccessful)
+        {
+            return UnprocessableEntity("Could not promote user to event organizer.");
+        }
+        
+        return NoContent();
+    } 
 }

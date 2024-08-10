@@ -24,7 +24,7 @@ config.AddEnvironmentVariables();
 builder.Services.AddAuthentication(x =>
     {
         x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-        x.DefaultChallengeScheme = GoogleDefaults.AuthenticationScheme;
+        x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
         x.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
         x.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
     }).AddJwtBearer(x =>
@@ -61,7 +61,9 @@ builder.Services.AddDbContext<ApplicationDbContext>((serviceProvider, optionsBui
 builder.Services.AddCors(CorsConfig.CorsPolicyConfig);
 
 builder.Services.AddSingleton<JwtHandler>(); // jwt auth
+
 builder.Services.AddScoped<IAccountService, AccountService>();
+builder.Services.AddScoped<IEventService, EventService>();
 
 builder.Services.AddMemoryCache();
 builder.Services.AddSingleton<ICacheService, MemoryCacheService>();

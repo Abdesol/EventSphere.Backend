@@ -13,6 +13,11 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     /// </summary>
     public DbSet<User> Users { get; set; }
     
+    /// <summary>
+    /// The Events table in the database
+    /// </summary>
+    public DbSet<Event> Events { get; set; }
+    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

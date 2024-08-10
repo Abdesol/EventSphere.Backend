@@ -70,7 +70,7 @@ public class AccountService(JwtHandler jwtHandler, ApplicationDbContext appDbCon
         }
 
         var token = jwtHandler.CreateToken(user);
-        return new UserAuthenticationResponseDto(token, true);
+        return new UserAuthenticationResponseDto(token, true, user.Id);
     }
 
     /// <inheritdoc />
@@ -84,5 +84,32 @@ public class AccountService(JwtHandler jwtHandler, ApplicationDbContext appDbCon
     {
         var user = await appDbContext.Users.AsNoTracking().FirstOrDefaultAsync(x => x.Email == email);
         return user != null && user.IsOAuth;
+    }
+    
+    /// <inheritdoc />
+    public async Task<bool> DoesUserExist(int id)
+    {
+        var user = await appDbContext.Users.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
+        return user != null;
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> IsUserAlreadyAnEventOrganizer(int id)
+    {
+        var user = await appDbContext.Users.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
+        return user != null && user.Role == Role.EventOrganizer;
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> PromoteToEventOrganizer(int id)
+    {
+        var user = await appDbContext.Users.FirstOrDefaultAsync(x => x.Id == id);
+        if (user == null) return false;
+        
+        user.Role = Role.EventOrganizer;
+        appDbContext.Users.Update(user);
+        await appDbContext.SaveChangesAsync();
+        
+        return true;
     }
 }

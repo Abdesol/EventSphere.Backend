@@ -11,5 +11,6 @@ namespace EventSphere.Domain.Dtos;
 /// </param>
 public record UserAuthenticationResponseDto(
     string Token,
-    bool IsAuthenticated
+    bool IsAuthenticated,
+    int Id
 );
