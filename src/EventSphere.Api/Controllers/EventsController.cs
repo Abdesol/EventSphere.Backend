@@ -51,8 +51,7 @@ public class EventsController(IEventService eventService, IAccountService accoun
     [HttpPost("create")]
     public async Task<IActionResult> Create(EventCreateRequestDto eventCreateRequestDto)
     {
-        var token = Request.Headers.Authorization.ToString().Split(" ")[1];
-        var userEmail = jwtHandler.GetUserEmail(token);
+        var userEmail = jwtHandler.GetUserEmail(Request.Headers.Authorization);
         if (userEmail is null)
         {
             return Unauthorized("Not able to find the email from the authentication token.");
@@ -76,14 +75,13 @@ public class EventsController(IEventService eventService, IAccountService accoun
     [HttpGet("delete/{id:int}")]
     public async Task<IActionResult> Delete(int id)
     {
+        if (!await eventService.DoesEventExist(id))
+            return BadRequest("The id of the event is not found in the database");
+        
         var isSuccessfulDelete = await eventService.Delete(id);
         if (isSuccessfulDelete) return Ok();
 
-        var errorText = await eventService.DoesEventExist(id)
-            ? "Not able to delete the event data"
-            : "The id of the event is not found in the database";
-
-        return UnprocessableEntity(errorText);
+        return UnprocessableEntity("Not able to delete the event data");
     }
 
     /// <summary>
@@ -93,13 +91,12 @@ public class EventsController(IEventService eventService, IAccountService accoun
     [HttpPut("update")]
     public async Task<IActionResult> Update(EventUpdateRequestDto eventUpdateRequestDto)
     {
+        if (!await eventService.DoesEventExist(eventUpdateRequestDto.Id!.Value))
+            return BadRequest("The id of the event is not found in the database");
+
         var isSuccessfulUpdate = await eventService.Update(eventUpdateRequestDto);
         if (isSuccessfulUpdate) return Ok();
 
-        var errorText = await eventService.DoesEventExist(eventUpdateRequestDto.Id!.Value)
-            ? "Not able to update the event data"
-            : "The id of the event is not found in the database";
-
-        return UnprocessableEntity(errorText);
+        return UnprocessableEntity("Not able to update the event data");
     }
 }

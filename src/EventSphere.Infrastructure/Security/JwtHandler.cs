@@ -3,6 +3,7 @@ using System.Security.Claims;
 using System.Text;
 using EventSphere.Domain.Entities;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Primitives;
 using Microsoft.IdentityModel.Tokens;
 
 namespace EventSphere.Infrastructure.Security;
@@ -69,19 +70,21 @@ public class JwtHandler(IConfiguration configuration)
 
         return claims;
     }
-    
-    
+
+
     /// <summary>
     /// A method that extracts the user ID from a JWT token.
     /// </summary>
-    /// <param name="token">
-    /// The JWT token from which the user ID is extracted.
+    /// <param name="authorization">
+    /// The authorization header that holds the JWT token.
     /// </param>
     /// <returns>
     /// The user ID as a string.
     /// </returns>
-    public string? GetUserEmail(string token)
-    {
+    public virtual string? GetUserEmail(StringValues authorization)
+    {        
+        var token = authorization.ToString().Split(" ")[1];
+
         var tokenHandler = new JwtSecurityTokenHandler();
         var jwtToken = tokenHandler.ReadJwtToken(token);
 
