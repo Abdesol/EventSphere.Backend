@@ -34,6 +34,20 @@ public class AccountsController(
         TimeSpan.FromMinutes(configuration.GetValue<int>("Jwt:ExpiryInMinutes"));
 
     /// <summary>
+    /// An endpoint to get user details by id
+    /// </summary>
+    [HttpGet("{id:int}")]
+    public async Task<IActionResult> GetUser(int id)
+    {
+        var user = await accountService.GetUserById(id);
+
+        if (user is null)
+            return BadRequest("The id of the user is not found in the database");
+
+        return Ok(user.ToUserRegistrationResponseDto());
+    }
+    
+    /// <summary>
     /// Endpoint to register a new user.
     /// </summary>
     [HttpPost("register")]
@@ -168,7 +182,13 @@ public class AccountsController(
         {
             return UnprocessableEntity("Could not promote user to event organizer.");
         }
+
+        var newToken = await accountService.GenerateTokenByUserId(id);
+        if (newToken is null)
+        {
+            return UnprocessableEntity("Could not create a new token");
+        }
         
-        return NoContent();
+        return Ok(new PromoteToEventOrganizerResponseDto(newToken));
     } 
 }

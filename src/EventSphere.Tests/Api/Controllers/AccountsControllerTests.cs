@@ -199,4 +199,22 @@ public class AccountsControllerTests
         var unprocessableEntityResult = Assert.IsType<UnprocessableEntityObjectResult>(result);
         Assert.Equal(422, unprocessableEntityResult.StatusCode);
     }
+    
+    [Fact]
+    public async void PromoteToEventOrganizer_WhenNotAbleToCreateNewToken_ReturnsUnprocessableEntity()
+    {
+        var userId = 0;
+        _mockAccountService.Setup(x => x.DoesUserExist(userId))
+            .ReturnsAsync(true);
+        _mockAccountService.Setup(x => x.IsUserAlreadyAnEventOrganizer(userId))
+            .ReturnsAsync(false);
+        _mockAccountService.Setup(x => x.PromoteToEventOrganizer(userId))
+            .ReturnsAsync(true);
+        _mockAccountService.Setup(x => x.GenerateTokenByUserId(userId))
+            .ReturnsAsync((string?)null);
+
+        var result = await _controller.PromoteToEventOrganizer(userId);
+        var unprocessableEntityResult = Assert.IsType<UnprocessableEntityObjectResult>(result);
+        Assert.Equal(422, unprocessableEntityResult.StatusCode);
+    }
 }

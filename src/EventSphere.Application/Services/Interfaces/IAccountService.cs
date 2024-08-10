@@ -48,14 +48,29 @@ public interface IAccountService
     /// The user authentication response data transfer object.
     /// </returns>
     public Task<UserAuthenticationResponseDto?> Authenticate(UserAuthenticationRequestDto userAuthenticationRequestDto, bool isOAuth = false);
+
+    /// <summary>
+    /// Returns the token as a string by a provided user id
+    /// </summary>
+    /// <param name="id">id of the user</param>
+    /// <returns>The JWT token for authentication</returns>
+    public Task<string?> GenerateTokenByUserId(int id);
     
     /// <summary>
-    /// Gets a user by username.
+    /// Gets a user by email.
     /// </summary>
     /// <returns>
     /// The user entity.
     /// </returns>
     public Task<User?> GetUserByEmail(string email);
+    
+    /// <summary>
+    /// Gets a user by id.
+    /// </summary>
+    /// <returns>
+    /// The user entity.
+    /// </returns>
+    public Task<User?> GetUserById(int id);
 
     /// <summary>
     /// Gets a user by username.

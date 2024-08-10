@@ -15,14 +15,14 @@ public class AccountService(JwtHandler jwtHandler, ApplicationDbContext appDbCon
     public async Task<bool> IsThereSimilarUsernames(string username)
     {
         var user = await appDbContext.Users.AsNoTracking().FirstOrDefaultAsync(x => x.Username == username);
-        return user != null;
+        return user is not null;
     }
     
     /// <inheritdoc />
     public async Task<bool> IsThereSimilarEmails(string email)
     {
         var user = await appDbContext.Users.AsNoTracking().FirstOrDefaultAsync(x => x.Email == email);
-        return user != null;
+        return user is not null;
     }
     
     /// <inheritdoc />
@@ -73,37 +73,55 @@ public class AccountService(JwtHandler jwtHandler, ApplicationDbContext appDbCon
         return new UserAuthenticationResponseDto(token, true, user.Id);
     }
 
+    
+    /// <inheritdoc />
+    public async Task<string?> GenerateTokenByUserId(int id)
+    {
+        var user = await appDbContext.Users.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
+        if (user is null)
+            return null;
+        
+        var token = jwtHandler.CreateToken(user);
+        return token;
+    }
+
     /// <inheritdoc />
     public async Task<User?> GetUserByEmail(string email)
     {
         return await appDbContext.Users.AsNoTracking().FirstOrDefaultAsync(x => x.Email == email);
+    }
+
+    /// <inheritdoc />
+    public async Task<User?> GetUserById(int id)
+    {
+        return await appDbContext.Users.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
     }
     
     /// <inheritdoc />
     public async Task<bool> IsUserRegisteredWithOAuth(string email)
     {
         var user = await appDbContext.Users.AsNoTracking().FirstOrDefaultAsync(x => x.Email == email);
-        return user != null && user.IsOAuth;
+        return user is not null && user.IsOAuth;
     }
     
     /// <inheritdoc />
     public async Task<bool> DoesUserExist(int id)
     {
         var user = await appDbContext.Users.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
-        return user != null;
+        return user is not null;
     }
 
     /// <inheritdoc />
     public async Task<bool> IsUserAlreadyAnEventOrganizer(int id)
     {
         var user = await appDbContext.Users.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
-        return user != null && user.Role == Role.EventOrganizer;
+        return user is not null && user.Role == Role.EventOrganizer;
     }
 
     /// <inheritdoc />
     public async Task<bool> PromoteToEventOrganizer(int id)
     {
-        var user = await appDbContext.Users.FirstOrDefaultAsync(x => x.Id == id);
+        var user = await appDbContext.Users.FindAsync(id);
         if (user == null) return false;
         
         user.Role = Role.EventOrganizer;

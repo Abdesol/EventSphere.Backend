@@ -70,6 +70,26 @@ public class JwtHandler(IConfiguration configuration)
         return claims;
     }
     
+    
+    /// <summary>
+    /// A method that extracts the user ID from a JWT token.
+    /// </summary>
+    /// <param name="token">
+    /// The JWT token from which the user ID is extracted.
+    /// </param>
+    /// <returns>
+    /// The user ID as a string.
+    /// </returns>
+    public string? GetUserEmail(string token)
+    {
+        var tokenHandler = new JwtSecurityTokenHandler();
+        var jwtToken = tokenHandler.ReadJwtToken(token);
+
+        var userEmailClaim = jwtToken.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email);
+        
+        return userEmailClaim?.Value;
+    }
+    
     /// <summary>
     /// A method that generates the token options for the JWT token
     /// </summary>
