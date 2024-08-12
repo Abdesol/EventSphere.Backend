@@ -14,7 +14,8 @@ public class EventService(ApplicationDbContext appDbContext) : IEventService
     {
         var eventObj = eventCreateRequestDto.ToEntity(ownerId: ownerId);
 
-        eventObj.Date = DateOnly.FromDateTime(DateTimeOffset.FromUnixTimeSeconds(eventCreateRequestDto.StartTime).Date);
+        var dateTime = DateTimeOffset.FromUnixTimeSeconds(eventCreateRequestDto.StartTime).UtcDateTime;
+        eventObj.Date = new DateOnly(dateTime.Year, dateTime.Month, dateTime.Day);
 
         var eventEntry = await appDbContext.Events.AddAsync(eventObj);
         await appDbContext.SaveChangesAsync();
@@ -46,10 +47,11 @@ public class EventService(ApplicationDbContext appDbContext) : IEventService
         eventObj.EventTypes = eventUpdateRequestDto.EventTypes ?? eventObj.EventTypes;
         eventObj.StartTime = eventUpdateRequestDto.StartTime ?? eventObj.StartTime;
         eventObj.EndTime = eventUpdateRequestDto.EndTime ?? eventObj.EndTime;
-        
+
         if (eventUpdateRequestDto.StartTime is not null)
         {
-            eventObj.Date = DateOnly.FromDateTime(DateTimeOffset.FromUnixTimeSeconds(eventObj.StartTime).Date);
+            var dateTime = DateTimeOffset.FromUnixTimeSeconds(eventObj.StartTime).UtcDateTime;
+            eventObj.Date = new DateOnly(dateTime.Year, dateTime.Month, dateTime.Day);
         }
 
         await appDbContext.SaveChangesAsync();
