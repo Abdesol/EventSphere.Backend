@@ -1,11 +1,11 @@
 using EventSphere.Application.Services;
 using EventSphere.Application.Services.Interfaces;
-using EventSphere.Common.Utilities;
 using EventSphere.Domain.Dtos;
 using EventSphere.Domain.Entities;
 using EventSphere.Common.Enums;
 using EventSphere.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using DateTimeOffset = System.DateTimeOffset;
 
 namespace EventSphere.Tests.Application.Services;
@@ -23,8 +23,9 @@ public class EventServiceTests
             .Options;
         _appDbContext = new ApplicationDbContext(options);
         SeedDatabase();
-
-        _service = new EventService(_appDbContext);
+        
+        var cache = new MemoryCache(new MemoryCacheOptions());
+        _service = new EventService(cache, _appDbContext);
     }
 
     private void SeedDatabase()

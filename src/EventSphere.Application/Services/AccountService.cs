@@ -6,11 +6,16 @@ using EventSphere.Domain.Entities;
 using EventSphere.Infrastructure.Data;
 using EventSphere.Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace EventSphere.Application.Services;
 
-public class AccountService(JwtHandler jwtHandler, ApplicationDbContext appDbContext) : IAccountService
+public class AccountService(IMemoryCache cache, JwtHandler jwtHandler, ApplicationDbContext appDbContext) : IAccountService
 {
+    private const string UserCachePrefix = "User_";
+    private static readonly TimeSpan UserCacheExpirationInMinutes = TimeSpan.FromMinutes(5);
+    private static readonly TimeSpan UserCacheSlidingExpirationInMinutes = TimeSpan.FromMinutes(1);
+    
     /// <inheritdoc />
     public async Task<bool> IsThereSimilarUsernames(string username)
     {
@@ -94,7 +99,25 @@ public class AccountService(JwtHandler jwtHandler, ApplicationDbContext appDbCon
     /// <inheritdoc />
     public async Task<User?> GetUserById(int id)
     {
-        return await appDbContext.Users.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
+        var cacheKey = UserCachePrefix + id;
+        
+        if (cache.TryGetValue(cacheKey, out User? cachedUser))
+        {
+            return cachedUser!;
+        }
+        
+        var user = await appDbContext.Users.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
+
+        if (user is not null)
+        {
+            cache.Set(cacheKey, user, new MemoryCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = UserCacheExpirationInMinutes,
+                SlidingExpiration = UserCacheSlidingExpirationInMinutes
+            });
+        }
+        
+        return user;
     }
     
     /// <inheritdoc />
@@ -127,6 +150,9 @@ public class AccountService(JwtHandler jwtHandler, ApplicationDbContext appDbCon
         user.Role = Role.EventOrganizer;
         appDbContext.Users.Update(user);
         await appDbContext.SaveChangesAsync();
+        
+        var cacheKey = UserCachePrefix + id;
+        cache.Remove(cacheKey);
         
         return true;
     }

@@ -7,7 +7,7 @@ using EventSphere.Common.Enums;
 using EventSphere.Infrastructure.Data;
 using EventSphere.Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Internal;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Moq;
 
@@ -36,7 +36,8 @@ public class AccountServiceTests
         _appDbContext = new ApplicationDbContext(options);
         SeedDatabase();
         
-        _service = new AccountService(_mockJwtHandler.Object, _appDbContext);
+        var cache = new MemoryCache(new MemoryCacheOptions());
+        _service = new AccountService(cache, _mockJwtHandler.Object, _appDbContext);
     }
 
     private void SeedDatabase()
@@ -45,12 +46,12 @@ public class AccountServiceTests
             [
                 new User()
                 {
-                    Id = 1, Email = "test1@gmail.com", Username = "test1", PasswordHash = HashHelper.Hash("Test1234##"),
+                    Email = "test1@gmail.com", Username = "test1", PasswordHash = HashHelper.Hash("Test1234##"),
                     Role = Role.User, IsOAuth = false, OAuthClient = null
                 },
                 new User()
                 {
-                    Id = 2, Email = "test2@gmail.com", Username = "test2", PasswordHash = null,
+                    Email = "test2@gmail.com", Username = "test2", PasswordHash = null,
                     Role = Role.User, IsOAuth = true, OAuthClient = "Google"
                 }
             ]

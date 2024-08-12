@@ -4,11 +4,16 @@ using EventSphere.Domain.Dtos;
 using EventSphere.Domain.Entities;
 using EventSphere.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace EventSphere.Application.Services;
 
-public class EventService(ApplicationDbContext appDbContext) : IEventService
+public class EventService(IMemoryCache cache, ApplicationDbContext appDbContext) : IEventService
 {
+    private const string EventCachePrefix = "Event_";
+    private static readonly TimeSpan EventCacheExpirationInMinutes = TimeSpan.FromMinutes(5);
+    private static readonly TimeSpan EventCacheSlidingExpirationInMinutes = TimeSpan.FromMinutes(1);
+
     /// <inheritdoc />
     public async Task<Event> Create(EventCreateRequestDto eventCreateRequestDto, int ownerId)
     {
@@ -31,6 +36,9 @@ public class EventService(ApplicationDbContext appDbContext) : IEventService
 
         appDbContext.Events.Remove(eventObj);
         await appDbContext.SaveChangesAsync();
+        
+        var cacheKey = EventCachePrefix + id;
+        cache.Remove(cacheKey);
 
         return true;
     }
@@ -55,6 +63,9 @@ public class EventService(ApplicationDbContext appDbContext) : IEventService
         }
 
         await appDbContext.SaveChangesAsync();
+        
+        var cacheKey = EventCachePrefix + eventUpdateRequestDto.Id;
+        cache.Remove(cacheKey);
 
         return true;
     }
@@ -69,12 +80,29 @@ public class EventService(ApplicationDbContext appDbContext) : IEventService
     /// <inheritdoc />
     public async Task<Event?> GetEventById(int id)
     {
+        var cacheKey = EventCachePrefix + id;
+        
+        if (cache.TryGetValue(cacheKey, out Event? cachedEvent))
+        {
+            return cachedEvent!;
+        }
+        
         var eventObj = await appDbContext.Events.AsNoTracking().FirstOrDefaultAsync(e => e.Id == id);
+        
+        if (eventObj is not null)
+        {
+            cache.Set(cacheKey, eventObj, new MemoryCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = EventCacheExpirationInMinutes,
+                SlidingExpiration = EventCacheSlidingExpirationInMinutes
+            });
+        }
+        
         return eventObj;
     }
 
     /// <inheritdoc />
-    public Task<List<Event>> GetEvents(ListRequestDto listRequestDto)
+    public async Task<List<Event>> GetEvents(ListRequestDto listRequestDto)
     {
         var query = appDbContext.Events.AsNoTracking().AsQueryable();
         if (listRequestDto.EventTypes is not null)
@@ -84,8 +112,9 @@ public class EventService(ApplicationDbContext appDbContext) : IEventService
                     e.EventTypes != null &&
                     e.EventTypes.Any(et => listRequestDto.EventTypes.Contains(et)));
         }
+
         query = query.Where(e => e.Date >= listRequestDto.StartDate && e.Date <= listRequestDto.EndDate);
 
-        return query.ToListAsync();
+        return await query.ToListAsync();
     }
 }
