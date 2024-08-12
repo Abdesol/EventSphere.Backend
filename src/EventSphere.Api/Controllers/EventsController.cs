@@ -1,7 +1,7 @@
 using EventSphere.Application.Mappers;
 using EventSphere.Application.Services.Interfaces;
+using EventSphere.Common.Enums;
 using EventSphere.Domain.Dtos;
-using EventSphere.Domain.Enums;
 using EventSphere.Infrastructure.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -19,14 +19,27 @@ namespace EventSphere.Api.Controllers;
 public class EventsController(IEventService eventService, IAccountService accountService, JwtHandler jwtHandler)
     : ControllerBase
 {
+    private static readonly List<string> ValidEventTypes = EventTypes.All();
+        
     /// <summary>
-    /// An endpoint to list events based on the filter
+    /// List the event types that are acceptable
+    /// </summary>
+    /// <returns></returns>
+    [HttpGet("event-types")]
+    public IActionResult GetEventTypes()
+    {
+        return Ok(ValidEventTypes);
+    }
+    
+    /// <summary>
+    /// An endpoint to list events based on the filter. If no filter provided, gives all events in the range of today to 7 days ahead.
     /// </summary>
     [Authorize]
     [HttpPost("list")]
-    public async Task<IActionResult> List()
+    public async Task<IActionResult> List(ListRequestDto listRequestDto)
     {
-        return Ok();
+        var events = await eventService.GetEvents(listRequestDto);
+        return Ok(events.ToEventListResponseDto());
     }
 
     /// <summary>

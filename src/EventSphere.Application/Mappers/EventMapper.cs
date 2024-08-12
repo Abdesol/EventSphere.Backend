@@ -35,4 +35,9 @@ public static class EventMapper
             eventEntity.Location!, eventEntity.OwnerId, eventEntity.Date, eventEntity.StartTime, eventEntity.EndTime,
             eventEntity.EventTypes);
     }
+    
+    public static ListResponseDto ToEventListResponseDto(this List<Event> eventEntities)
+    {
+        return new ListResponseDto(eventEntities.ConvertAll(ToEventCreateResponseDto));
+    }
 }

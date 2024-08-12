@@ -3,7 +3,7 @@ using EventSphere.Application.Services.Interfaces;
 using EventSphere.Common.Utilities;
 using EventSphere.Domain.Dtos;
 using EventSphere.Domain.Entities;
-using EventSphere.Domain.Enums;
+using EventSphere.Common.Enums;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;

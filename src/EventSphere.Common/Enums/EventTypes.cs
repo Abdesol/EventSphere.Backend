@@ -1,4 +1,6 @@
-namespace EventSphere.Domain.Enums;
+using System.Reflection;
+
+namespace EventSphere.Common.Enums;
 
 /// <summary>
 /// Enum of the events' types
@@ -18,4 +20,13 @@ public static class EventTypes
     public const string Gaming = "Gaming";
     
     public const string Adventure = "Adventure";
+    
+    public static List<string> All()
+    {
+        var fieldInfos = typeof(EventTypes).GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy);
+        return fieldInfos
+            .Where(field => field.IsLiteral && !field.IsInitOnly)
+            .Select(field => (string)field.GetValue(null)!)
+            .ToList();
+    }
 }

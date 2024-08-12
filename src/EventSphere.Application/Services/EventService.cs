@@ -59,15 +59,33 @@ public class EventService(ApplicationDbContext appDbContext) : IEventService
         return true;
     }
 
+    /// <inheritdoc />
     public async Task<bool> DoesEventExist(int id)
     {
         var eventObj = await appDbContext.Events.AsNoTracking().FirstOrDefaultAsync(e => e.Id == id);
         return eventObj is not null;
     }
 
+    /// <inheritdoc />
     public async Task<Event?> GetEventById(int id)
     {
         var eventObj = await appDbContext.Events.AsNoTracking().FirstOrDefaultAsync(e => e.Id == id);
         return eventObj;
+    }
+
+    /// <inheritdoc />
+    public Task<List<Event>> GetEvents(ListRequestDto listRequestDto)
+    {
+        var query = appDbContext.Events.AsNoTracking().AsQueryable();
+        if (listRequestDto.EventTypes is not null)
+        {
+            query = query.Where(
+                e =>
+                    e.EventTypes != null &&
+                    e.EventTypes.Any(et => listRequestDto.EventTypes.Contains(et)));
+        }
+        query = query.Where(e => e.Date >= listRequestDto.StartDate && e.Date <= listRequestDto.EndDate);
+
+        return query.ToListAsync();
     }
 }

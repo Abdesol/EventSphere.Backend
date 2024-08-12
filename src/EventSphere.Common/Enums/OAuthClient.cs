@@ -1,4 +1,4 @@
-namespace EventSphere.Domain.Enums;
+namespace EventSphere.Common.Enums;
 
 /// <summary>
 /// Enum of the OAuth clients list

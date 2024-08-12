@@ -1,8 +1,8 @@
 using System.Security.Claims;
 using EventSphere.Application.Mappers;
 using EventSphere.Application.Services.Interfaces;
+using EventSphere.Common.Enums;
 using EventSphere.Domain.Dtos;
-using EventSphere.Domain.Enums;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;

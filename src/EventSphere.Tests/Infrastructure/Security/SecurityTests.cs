@@ -1,6 +1,6 @@
 using System.Net.Http.Headers;
 using EventSphere.Domain.Entities;
-using EventSphere.Domain.Enums;
+using EventSphere.Common.Enums;
 using EventSphere.Infrastructure.Security;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Primitives;

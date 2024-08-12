@@ -1,8 +1,8 @@
 using EventSphere.Application.Services.Interfaces;
+using EventSphere.Common.Enums;
 using EventSphere.Common.Utilities;
 using EventSphere.Domain.Dtos;
 using EventSphere.Domain.Entities;
-using EventSphere.Domain.Enums;
 using EventSphere.Infrastructure.Data;
 using EventSphere.Infrastructure.Security;
 using Microsoft.EntityFrameworkCore;

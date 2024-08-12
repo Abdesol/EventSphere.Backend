@@ -1,4 +1,3 @@
-using EventSphere.Domain.Enums;
 
 namespace EventSphere.Domain.Entities;
 
@@ -16,7 +15,7 @@ public class User
     /// <summary>
     /// Role of the user in the system: User, EventOrganizer or Admin.
     /// </summary>
-    public string Role { get; set; } = Enums.Role.User;
+    public string Role { get; set; } = EventSphere.Common.Enums.Role.User;
     
     /// <summary>
     /// The password hash of the user

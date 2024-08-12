@@ -3,6 +3,7 @@ using System.Text;
 using DotNetEnv;
 using EventSphere.Api.Configuration;
 using EventSphere.Api.Middlewares;
+using EventSphere.Api.Swagger.Filters;
 using EventSphere.Application.Services;
 using EventSphere.Application.Services.Interfaces;
 using EventSphere.Infrastructure.Data;
@@ -78,6 +79,8 @@ builder.Services.AddSwaggerGen(c =>
     var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
     c.IncludeXmlComments(xmlPath);
+    
+    c.SchemaFilter<DateOnlySchemaFilter>();
 });
 
 var app = builder.Build();

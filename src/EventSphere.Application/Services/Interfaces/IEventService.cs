@@ -47,4 +47,11 @@ public interface IEventService
     /// <param name="id">Id of the event</param>
     /// <returns>The event object if it exists, otherwise null</returns>
     public Task<Event?> GetEventById(int id);
+    
+    /// <summary>
+    /// Gets events based on the filter from the listRequestDto
+    /// </summary>
+    /// <param name="listRequestDto">The filters request dto</param>
+    /// <returns>A list of events based on the filters</returns>
+    public Task<List<Event>> GetEvents(ListRequestDto listRequestDto);
 }
