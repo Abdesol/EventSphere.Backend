@@ -24,7 +24,7 @@ public class AccountsControllerTests
 
         var mockJwtExpiryInMinutesConfig = new Mock<IConfigurationSection>();
         mockJwtExpiryInMinutesConfig.Setup(x => x.Value).Returns("60");
-        mockConfiguration.Setup(x => x.GetSection("Jwt:ExpiryInMinutes")).Returns(mockJwtExpiryInMinutesConfig.Object);
+        mockConfiguration.Setup(x => x.GetSection("JwtSettings:ExpiryInMinutes")).Returns(mockJwtExpiryInMinutesConfig.Object);
 
         _controller = new AccountsController(
             _mockAccountService.Object,
