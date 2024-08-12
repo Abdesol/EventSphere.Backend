@@ -45,7 +45,7 @@ public class JwtHandler(IConfiguration configuration)
     /// </returns>
     private SigningCredentials GetSigningCredentials()
     {
-        var key = Encoding.UTF8.GetBytes(_jwtSettings["key"]!);
+        var key = Encoding.UTF8.GetBytes(configuration["JWT_SECRET_KEY"]!);
         var secret = new SymmetricSecurityKey(key);
 
         return new SigningCredentials(secret, SecurityAlgorithms.HmacSha256);
