@@ -31,7 +31,7 @@ public class AccountsController(
     IConfiguration configuration) : ControllerBase
 {
     private readonly TimeSpan _tokenExpiration =
-        TimeSpan.FromMinutes(configuration.GetValue<int>("Jwt:ExpiryInMinutes"));
+        TimeSpan.FromMinutes(configuration.GetValue<int>("JwtSettings:ExpiryInMinutes"));
 
     /// <summary>
     /// An endpoint to get user details by id
@@ -95,7 +95,7 @@ public class AccountsController(
     /// An endpoint protected with jwt authorization to logout a user.
     /// </summary>
     [Authorize]
-    [HttpPost("logout")]
+    [HttpGet("logout")]
     public IActionResult Logout()
     {
         var token = HttpContext.Request.Headers.Authorization.ToString().Replace("Bearer ", "");
