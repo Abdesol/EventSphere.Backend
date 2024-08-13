@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using MongoDB.Driver.GridFS;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -59,12 +60,18 @@ builder.Services.AddDbContext<ApplicationDbContext>((serviceProvider, optionsBui
     var connString = config["POSTGRES_DB_CONNECTION_STRING"];
     optionsBuilder.UseNpgsql(connString);
 });
+
+builder.Services.AddSingleton<MongoDbContext>();
+builder.Services.AddSingleton<IGridFSBucket>(
+    provider => provider.GetRequiredService<MongoDbContext>().GetGridFsBucket());
+
 builder.Services.AddCors(CorsConfig.CorsPolicyConfig);
 
 builder.Services.AddSingleton<JwtHandler>(); // jwt auth
 
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IEventService, EventService>();
+builder.Services.AddScoped<IFileService, FileService>();
 
 builder.Services.AddMemoryCache();
 builder.Services.AddSingleton<ICacheService, MemoryCacheService>();
@@ -79,7 +86,7 @@ builder.Services.AddSwaggerGen(c =>
     var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
     c.IncludeXmlComments(xmlPath);
-    
+
     c.SchemaFilter<DateOnlySchemaFilter>();
 });
 

@@ -9,6 +9,7 @@
     <ItemGroup>
         <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.4" />
         <PackageReference Include="MongoDB.Driver" Version="2.28.0" />
+        <PackageReference Include="MongoDB.Driver.GridFS" Version="2.28.0" />
         <PackageReference Include="Npgsql" Version="8.0.3" />
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="8.0.4" />
     </ItemGroup>
