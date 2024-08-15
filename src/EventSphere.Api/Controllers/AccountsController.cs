@@ -36,6 +36,7 @@ public class AccountsController(
     /// <summary>
     /// An endpoint to get user details by id
     /// </summary>
+    [Authorize]
     [HttpGet("{id:int}")]
     public async Task<IActionResult> GetUser(int id)
     {

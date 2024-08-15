@@ -1,0 +1,47 @@
+﻿version: '3'
+services:
+  eventsphere-backend-development:
+    image: aspnetcore
+    container_name: eventsphere-development
+    depends_on:
+      - mongo
+      - postgres
+    ports:
+      - "8080:8080"
+    build:
+      context: .
+      dockerfile: src/EventSphere.Api/Dockerfile
+      target: development
+    env_file:
+      - src/EventSphere.Api/.docker.env
+    networks:
+      - eventsphere-network
+  mongo:
+    image: mongo:latest
+    container_name: eventsphere-mongo
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - eventsphere-network
+    deploy:
+      resources:
+        limits:
+          memory: 300M
+  postgres:
+    image: postgres:latest
+    container_name: eventsphere-postgres
+    env_file:
+      - src/EventSphere.Api/.postgres.env
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - eventsphere-network
+    deploy:
+      resources:
+        limits:
+          memory: 300M
+volumes:
+  mongo-data:
+  postgres-data:
+networks:
+  eventsphere-network:
