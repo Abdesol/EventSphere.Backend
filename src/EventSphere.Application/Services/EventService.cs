@@ -102,18 +102,18 @@ public class EventService(IMemoryCache cache, ApplicationDbContext appDbContext)
     }
 
     /// <inheritdoc />
-    public async Task<List<Event>> GetEvents(ListRequestDto listRequestDto)
+    public async Task<List<Event>> GetEvents(ListEventsRequestDto listEventsRequestDto)
     {
         var query = appDbContext.Events.AsNoTracking().AsQueryable();
-        if (listRequestDto.EventTypes is not null)
+        if (listEventsRequestDto.EventTypes is not null)
         {
             query = query.Where(
                 e =>
                     e.EventTypes != null &&
-                    e.EventTypes.Any(et => listRequestDto.EventTypes.Contains(et)));
+                    e.EventTypes.Any(et => listEventsRequestDto.EventTypes.Contains(et)));
         }
 
-        query = query.Where(e => e.Date >= listRequestDto.StartDate && e.Date <= listRequestDto.EndDate);
+        query = query.Where(e => e.Date >= listEventsRequestDto.StartDate && e.Date <= listEventsRequestDto.EndDate);
 
         return await query.ToListAsync();
     }

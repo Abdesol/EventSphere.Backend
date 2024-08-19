@@ -1,5 +1,5 @@
 namespace EventSphere.Domain.Dtos;
 
-public record ListResponseDto(
+public record ListEventsResponseDto(
     List<EventCreateResponseDto> Events
 );

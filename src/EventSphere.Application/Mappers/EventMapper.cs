@@ -36,8 +36,8 @@ public static class EventMapper
             eventEntity.EventTypes);
     }
     
-    public static ListResponseDto ToEventListResponseDto(this List<Event> eventEntities)
+    public static ListEventsResponseDto ToEventListResponseDto(this List<Event> eventEntities)
     {
-        return new ListResponseDto(eventEntities.ConvertAll(ToEventCreateResponseDto));
+        return new ListEventsResponseDto(eventEntities.ConvertAll(ToEventCreateResponseDto));
     }
 }

@@ -51,7 +51,7 @@ public interface IEventService
     /// <summary>
     /// Gets events based on the filter from the listRequestDto
     /// </summary>
-    /// <param name="listRequestDto">The filters request dto</param>
+    /// <param name="listEventsRequestDto">The filters request dto</param>
     /// <returns>A list of events based on the filters</returns>
-    public Task<List<Event>> GetEvents(ListRequestDto listRequestDto);
+    public Task<List<Event>> GetEvents(ListEventsRequestDto listEventsRequestDto);
 }

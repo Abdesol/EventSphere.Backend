@@ -36,9 +36,9 @@ public class EventsController(IEventService eventService, IAccountService accoun
     /// </summary>
     [Authorize]
     [HttpPost("list")]
-    public async Task<IActionResult> List(ListRequestDto listRequestDto)
+    public async Task<IActionResult> List(ListEventsRequestDto listEventsRequestDto)
     {
-        var events = await eventService.GetEvents(listRequestDto);
+        var events = await eventService.GetEvents(listEventsRequestDto);
         return Ok(events.ToEventListResponseDto());
     }
 
