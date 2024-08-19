@@ -96,4 +96,12 @@ public interface IAccountService
     /// </summary>
     /// <returns>true if successful otherwise false</returns>
     public Task<bool> PromoteToEventOrganizer(int id);
+
+    /// <summary>
+    /// A method to set the profile picture of a user
+    /// </summary>
+    /// <param name="userId">id of the user in the db</param>
+    /// <param name="id">id of the picture in the db</param>
+    /// <returns>true if successfully done</returns>
+    public Task<bool> SetProfilePicture(int userId, string id);
 }

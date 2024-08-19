@@ -4,6 +4,7 @@ using EventSphere.Common.Utilities;
 using EventSphere.Domain.Dtos;
 using EventSphere.Domain.Entities;
 using EventSphere.Common.Enums;
+using EventSphere.Infrastructure.Security;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
@@ -15,10 +16,12 @@ public class AccountsControllerTests
 {
     private readonly AccountsController _controller;
     private readonly Mock<IAccountService> _mockAccountService;
+    private readonly Mock<JwtHandler> _mockJwtHandler;
 
     public AccountsControllerTests()
     {
         _mockAccountService = new Mock<IAccountService>();
+        var mockFileService = new Mock<IFileService>();
         var mockTokenBlacklistService = new Mock<ITokenBlacklistService>();
         var mockConfiguration = new Mock<IConfiguration>();
 
@@ -26,11 +29,32 @@ public class AccountsControllerTests
         mockJwtExpiryInMinutesConfig.Setup(x => x.Value).Returns("60");
         mockConfiguration.Setup(x => x.GetSection("JwtSettings:ExpiryInMinutes")).Returns(mockJwtExpiryInMinutesConfig.Object);
 
+        var mockJwtSection = new Mock<IConfigurationSection>();
+        mockConfiguration.Setup(x => x.GetSection("JwtSettings")).Returns(mockJwtSection.Object);
+        _mockJwtHandler = new Mock<JwtHandler>(mockConfiguration.Object);
+        
+        var httpContext = new DefaultHttpContext
+        {
+            Request =
+            {
+                Scheme = "http",
+                Host = new HostString("localhost")
+            }
+        };
+
         _controller = new AccountsController(
             _mockAccountService.Object,
+            mockFileService.Object,
             mockTokenBlacklistService.Object,
-            mockConfiguration.Object
-        );
+            mockConfiguration.Object,
+            _mockJwtHandler.Object
+        )
+        {
+            ControllerContext = new ControllerContext
+            {
+                HttpContext = httpContext
+            }
+        };
     }
     
     [Fact]

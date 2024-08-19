@@ -8,6 +8,11 @@ public class User
 {
     public int Id { get; set; }
     
+    /// <summary>
+    /// Id of the profile picture in the mongodb
+    /// </summary>
+    public string? ProfilePictureId { get; set; }
+    
     public string? Username { get; set; }
     
     public string? Email { get; set; }

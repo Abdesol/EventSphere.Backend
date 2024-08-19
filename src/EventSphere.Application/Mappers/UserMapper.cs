@@ -11,8 +11,13 @@ public static class UserMapper
     /// <summary>
     /// Maps user registration dto to user entity.
     /// </summary>
-    public static UserRegistrationResponseDto ToUserRegistrationResponseDto(this User user)
+    public static UserRegistrationResponseDto ToUserRegistrationResponseDto(this User user, string hostPath)
     {
-        return new UserRegistrationResponseDto(user.Id, user.Username!, user.Email!);
+        string? profilePicturePath = null;
+        if (user.ProfilePictureId != null)
+        {
+            profilePicturePath = $"{hostPath}/files/{user.ProfilePictureId}";
+        }
+        return new UserRegistrationResponseDto(user.Id, user.Username!, user.Email!, profilePicturePath);
     }
 }

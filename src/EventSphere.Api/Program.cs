@@ -57,7 +57,7 @@ builder.Services.AddAuthentication(x =>
 
 builder.Services.AddDbContext<ApplicationDbContext>((serviceProvider, optionsBuilder) =>
 {
-    var connString = config["POSTGRES_DB_CONNECTION_STRING"];
+    var connString = config["ConnectionStrings:PostgresDb"];
     optionsBuilder.UseNpgsql(connString);
 });
 

@@ -16,11 +16,14 @@ namespace EventSphere.Tests.Application.Services;
 public class AccountServiceTests
 {
     private readonly IAccountService _service;
+    private readonly Mock<IFileService> _mockFileService;
     private readonly Mock<JwtHandler> _mockJwtHandler;
     private readonly ApplicationDbContext _appDbContext;
 
     public AccountServiceTests()
     {
+        _mockFileService = new Mock<IFileService>();
+        
         var mockConfiguration = new Mock<IConfiguration>();
         var mockJwtSection = new Mock<IConfigurationSection>();
         mockConfiguration.Setup(x => x.GetSection("JwtSettings")).Returns(mockJwtSection.Object);
@@ -37,7 +40,7 @@ public class AccountServiceTests
         SeedDatabase();
         
         var cache = new MemoryCache(new MemoryCacheOptions());
-        _service = new AccountService(cache, _mockJwtHandler.Object, _appDbContext);
+        _service = new AccountService(cache, _mockFileService.Object, _mockJwtHandler.Object, _appDbContext);
     }
 
     private void SeedDatabase()

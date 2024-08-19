@@ -17,5 +17,6 @@ namespace EventSphere.Domain.Dtos;
 public record UserRegistrationResponseDto(
     int Id,
     [Required] string Email,
-    [Required] string Username
-    );
+    [Required] string Username,
+    string? ProfilePicturePath
+);

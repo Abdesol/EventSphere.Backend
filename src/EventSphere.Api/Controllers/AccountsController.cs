@@ -3,6 +3,7 @@ using EventSphere.Application.Mappers;
 using EventSphere.Application.Services.Interfaces;
 using EventSphere.Common.Enums;
 using EventSphere.Domain.Dtos;
+using EventSphere.Infrastructure.Security;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
@@ -27,8 +28,10 @@ namespace EventSphere.Api.Controllers;
 [Route("[controller]")]
 public class AccountsController(
     IAccountService accountService,
+    IFileService fileService,
     ITokenBlacklistService tokenBlacklistService,
-    IConfiguration configuration) : ControllerBase
+    IConfiguration configuration,
+    JwtHandler jwtHandler) : ControllerBase
 {
     private readonly TimeSpan _tokenExpiration =
         TimeSpan.FromMinutes(configuration.GetValue<int>("JwtSettings:ExpiryInMinutes"));
@@ -45,9 +48,10 @@ public class AccountsController(
         if (user is null)
             return BadRequest("The id of the user is not found in the database");
 
-        return Ok(user.ToUserRegistrationResponseDto());
+        var hostPath = $"{Request.Scheme}://{Request.Host}";
+        return Ok(user.ToUserRegistrationResponseDto(hostPath));
     }
-    
+
     /// <summary>
     /// Endpoint to register a new user.
     /// </summary>
@@ -66,9 +70,22 @@ public class AccountsController(
             return BadRequest("Email is already taken.");
         }
 
+        if (userRegistrationRequestDto.ProfilePictureId is not null)
+        {
+            var doesProfilePictureIdExist =
+                await fileService.DoesFileExist(userRegistrationRequestDto.ProfilePictureId);
+            if (!doesProfilePictureIdExist)
+                return BadRequest("Profile picture id does not exist.");
+
+            var isFileTypeOfImage = await fileService.IsFileTypeOfImage(userRegistrationRequestDto.ProfilePictureId);
+            if (!isFileTypeOfImage)
+                return BadRequest("Profile picture id is not an image type.");
+        }
+
         var user = await accountService.Register(userRegistrationRequestDto);
 
-        return Created("", user.ToUserRegistrationResponseDto());
+        var hostPath = $"{Request.Scheme}://{Request.Host}";
+        return Created("", user.ToUserRegistrationResponseDto(hostPath));
     }
 
     /// <summary>
@@ -158,7 +175,7 @@ public class AccountsController(
 
         return Ok(response);
     }
-    
+
     /// <summary>
     /// An endpoint to promote a user to event organizer.
     /// </summary>
@@ -172,7 +189,7 @@ public class AccountsController(
         {
             return BadRequest("User id does not exist.");
         }
-        
+
         if (await accountService.IsUserAlreadyAnEventOrganizer(id))
         {
             return BadRequest("User is already an event organizer");
@@ -189,7 +206,42 @@ public class AccountsController(
         {
             return UnprocessableEntity("Could not create a new token");
         }
-        
+
         return Ok(new PromoteToEventOrganizerResponseDto(newToken));
-    } 
+    }
+
+    /// <summary>
+    /// An endpoint to set a profile picture for a user.
+    /// </summary>
+    /// <param name="userId">the user id to set the profile picture to</param>
+    /// <param name="id">id of the profile picture</param>
+    [Authorize]
+    [HttpGet("set-profile-picture")]
+    public async Task<IActionResult> SetProfilePicture([FromQuery] string id)
+    {
+        var userEmail = jwtHandler.GetUserEmail(Request.Headers.Authorization);
+        if (userEmail is null)
+        {
+            return Unauthorized("Not able to find the email from the authentication token.");
+        }
+
+        var user = await accountService.GetUserByEmail(userEmail);
+
+        if (user is null)
+            return BadRequest("Not able to authenticate you with the authentication token.");
+
+        var doesProfilePictureIdExist =
+            await fileService.DoesFileExist(id);
+        if (!doesProfilePictureIdExist)
+            return BadRequest("Profile picture id does not exist.");
+
+        var isFileTypeOfImage = await fileService.IsFileTypeOfImage(id);
+        if (!isFileTypeOfImage)
+            return BadRequest("Profile picture id is not an image type.");
+
+        var isSet = await accountService.SetProfilePicture(user.Id, id);
+        return isSet
+            ? Ok("Profile picture updated successfully")
+            : StatusCode(500, "An error occurred while setting the profile picture.");
+    }
 }

@@ -10,7 +10,7 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace EventSphere.Application.Services;
 
-public class AccountService(IMemoryCache cache, JwtHandler jwtHandler, ApplicationDbContext appDbContext) : IAccountService
+public class AccountService(IMemoryCache cache, IFileService fileService, JwtHandler jwtHandler, ApplicationDbContext appDbContext) : IAccountService
 {
     private const string UserCachePrefix = "User_";
     private static readonly TimeSpan UserCacheExpirationInMinutes = TimeSpan.FromMinutes(5);
@@ -35,9 +35,10 @@ public class AccountService(IMemoryCache cache, JwtHandler jwtHandler, Applicati
     {
         var user = new User
         {
+            ProfilePictureId = userRegistrationRequestDto.ProfilePictureId,
             Username = userRegistrationRequestDto.Username,
             Email = userRegistrationRequestDto.Email,
-            Role = userRegistrationRequestDto.IsEventOrganizer ? Role.EventOrganizer : Role.User,
+            Role = Role.User,
             IsOAuth = isOAuth
         };
 
@@ -152,6 +153,23 @@ public class AccountService(IMemoryCache cache, JwtHandler jwtHandler, Applicati
         await appDbContext.SaveChangesAsync();
         
         var cacheKey = UserCachePrefix + id;
+        cache.Remove(cacheKey);
+        
+        return true;
+    }
+
+    public async Task<bool> SetProfilePicture(int userId, string id)
+    {
+        var user = await appDbContext.Users.FirstOrDefaultAsync(x => x.Id == userId);
+        if (user is null) return false;
+        
+        user.ProfilePictureId = id;
+        appDbContext.Users.Update(user);
+        await appDbContext.SaveChangesAsync();
+
+        fileService.FileIsUsed(id);
+        
+        var cacheKey = UserCachePrefix + userId;
         cache.Remove(cacheKey);
         
         return true;

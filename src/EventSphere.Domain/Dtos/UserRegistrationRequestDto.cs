@@ -17,11 +17,11 @@ namespace EventSphere.Domain.Dtos;
 /// <param name="Password">
 /// Password of the user. Should have a maximum length of 32 characters, and it is required.
 /// </param>
-/// <param name="IsEventOrganizer">
-/// Flag to determine if the user is an event organizer. Default value is false
+/// <param name="ProfilePictureId">
+/// Id of the picture that the user provides after uploading it using the files upload endpoint.
 /// </param>
 public record UserRegistrationRequestDto(
     [Required] [MaxLength(50)] [EmailAddress] string Email,
     [Required] [MinLength(3)] [MaxLength(10)] [Alphanumeric] string Username,
     [Required] [MaxLength(32)] [PasswordPropertyText] string Password,
-    bool IsEventOrganizer = false);
+    string? ProfilePictureId = null);
