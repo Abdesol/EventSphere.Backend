@@ -17,12 +17,13 @@ public class AccountsControllerTests
 {
     private readonly AccountsController _controller;
     private readonly Mock<IAccountService> _mockAccountService;
+    private readonly Mock<IFileService> _mockFileService;
     private readonly Mock<JwtHandler> _mockJwtHandler;
 
     public AccountsControllerTests()
     {
         _mockAccountService = new Mock<IAccountService>();
-        var mockFileService = new Mock<IFileService>();
+        _mockFileService = new Mock<IFileService>();
         var mockTokenBlacklistService = new Mock<ITokenBlacklistService>();
         var mockConfiguration = new Mock<IConfiguration>();
 
@@ -45,7 +46,7 @@ public class AccountsControllerTests
 
         _controller = new AccountsController(
             _mockAccountService.Object,
-            mockFileService.Object,
+            _mockFileService.Object,
             mockTokenBlacklistService.Object,
             mockConfiguration.Object,
             _mockJwtHandler.Object
@@ -262,5 +263,67 @@ public class AccountsControllerTests
         var result = await _controller.PromoteToEventOrganizer();
         var unprocessableEntityResult = Assert.IsType<UnprocessableEntityObjectResult>(result);
         Assert.Equal(422, unprocessableEntityResult.StatusCode);
+    }
+    
+    [Fact]
+    public async void SetProfilePicture_WhenUserIsNotAuthenticated_ReturnsUnauthorized()
+    {
+        _mockJwtHandler.Setup(x => x.GetUserEmail(It.IsAny<StringValues>()))
+            .Returns((string?)null);
+
+        var result = await _controller.SetProfilePicture(It.IsAny<string>());
+        var unauthorizedResult = Assert.IsType<UnauthorizedObjectResult>(result);
+        Assert.Equal(401, unauthorizedResult.StatusCode);
+    }
+    
+    [Fact]
+    public async void SetProfilePicture_WhenProfilePictureFileDoesNotExist_ReturnsBadRequest()
+    {
+        _mockJwtHandler.Setup(x => x.GetUserEmail(It.IsAny<StringValues>()))
+            .Returns("test@gmail.com");
+        _mockAccountService.Setup(x => x.GetUserByEmail(It.IsAny<string>()))
+            .ReturnsAsync(new User());
+        _mockFileService.Setup(x => x.DoesFileExist(It.IsAny<string>()))
+            .ReturnsAsync(false);
+
+        var result = await _controller.SetProfilePicture(It.IsAny<string>());
+        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
+        Assert.Equal(400, badRequestResult.StatusCode);
+    }
+    
+    [Fact]
+    public async void SetProfilePicture_WhenProfilePictureFileIsNotImage_ReturnsBadRequest()
+    {
+        _mockJwtHandler.Setup(x => x.GetUserEmail(It.IsAny<StringValues>()))
+            .Returns("test@gmail.com");
+        _mockAccountService.Setup(x => x.GetUserByEmail(It.IsAny<string>()))
+            .ReturnsAsync(new User());
+        _mockFileService.Setup(x => x.DoesFileExist(It.IsAny<string>()))
+            .ReturnsAsync(true);
+        _mockFileService.Setup(x => x.IsFileTypeOfImage(It.IsAny<string>()))
+            .ReturnsAsync(false);
+
+        var result = await _controller.SetProfilePicture(It.IsAny<string>());
+        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
+        Assert.Equal(400, badRequestResult.StatusCode);
+    }
+    
+    [Fact]
+    public async void SetProfilePicture_WhenProfilePictureIsNotSet_ReturnsInternalServerError()
+    {
+        _mockJwtHandler.Setup(x => x.GetUserEmail(It.IsAny<StringValues>()))
+            .Returns("test@gmail.com");
+        _mockAccountService.Setup(x => x.GetUserByEmail(It.IsAny<string>()))
+            .ReturnsAsync(new User());
+        _mockFileService.Setup(x => x.DoesFileExist(It.IsAny<string>()))
+            .ReturnsAsync(true);
+        _mockFileService.Setup(x => x.IsFileTypeOfImage(It.IsAny<string>()))
+            .ReturnsAsync(true);
+        _mockAccountService.Setup(x => x.SetProfilePicture(It.IsAny<int>(), It.IsAny<string>()))
+            .ReturnsAsync(false);
+
+        var result = await _controller.SetProfilePicture(It.IsAny<string>());
+        var internalServerErrorResult = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(500, internalServerErrorResult.StatusCode);
     }
 }

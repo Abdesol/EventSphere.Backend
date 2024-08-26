@@ -143,7 +143,7 @@ public class EventsControllerTests
     public void Delete_WhenNotAbleToDelete_ReturnsBadRequest()
     {
         const int userId = 0;
-        
+
         _mockEventService.Setup(x => x.DoesEventExist(It.IsAny<int>()))
             .ReturnsAsync(true);
         _mockEventService.Setup(x => x.Delete(It.IsAny<int>()))
@@ -205,7 +205,7 @@ public class EventsControllerTests
             .Returns("test@gmail.com");
         _mockAccountService.Setup(x => x.GetUserByEmail(It.IsAny<string>()))
             .ReturnsAsync(new User());
-        
+
         var result = _controller.Update(_testEventUpdateRequestDto).Result;
 
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
@@ -216,7 +216,7 @@ public class EventsControllerTests
     public void Update_WhenNotAbleToUpdate_ReturnsBadRequest()
     {
         const int userId = 0;
-        
+
         _mockEventService.Setup(x => x.DoesEventExist(It.IsAny<int>()))
             .ReturnsAsync(true);
         _mockEventService.Setup(x => x.Update(It.IsAny<EventUpdateRequestDto>()))
@@ -246,7 +246,7 @@ public class EventsControllerTests
     public void Update_WhenEventIsUpdated_ReturnsOk()
     {
         const int userId = 0;
-        
+
         _mockEventService.Setup(x => x.DoesEventExist(It.IsAny<int>()))
             .ReturnsAsync(true);
         _mockEventService.Setup(x => x.Update(It.IsAny<EventUpdateRequestDto>()))
@@ -270,5 +270,148 @@ public class EventsControllerTests
 
         var okResult = Assert.IsType<OkResult>(result);
         Assert.Equal(200, okResult.StatusCode);
+    }
+
+    [Fact]
+    public void SetBannerPicture_WhenEventIsNotFound_ReturnsUnauthorized()
+    {
+        const int eventId = 1;
+        const string bannerId = "1";
+        
+        _mockEventService.Setup(x => x.DoesEventExist(It.IsAny<int>()))
+            .ReturnsAsync(false);
+        _mockJwtHandler.Setup(x => x.GetUserEmail(It.IsAny<StringValues>()))
+            .Returns("test@gmail.com");
+        _mockAccountService.Setup(x => x.GetUserByEmail(It.IsAny<string>()))
+            .ReturnsAsync(new User());
+
+        var result = _controller.SetBannerPicture(eventId, bannerId).Result;
+
+        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
+        Assert.Equal(400, badRequestResult.StatusCode);
+    }
+
+    [Fact]
+    public void SetBannerPicture_WhenEventIdOwnerIdDoesNotMatchUserId_ReturnsBadRequest()
+    {
+        const int eventId = 1;
+        const string bannerId = "1";
+        const int userId = 1;
+        const int eventOwnerId = 2; // different
+
+        _mockEventService.Setup(x => x.DoesEventExist(It.IsAny<int>()))
+            .ReturnsAsync(true);
+        _mockEventService.Setup(x => x.GetEventById(It.IsAny<int>()))
+            .ReturnsAsync(new Event()
+            {
+                OwnerId = eventOwnerId
+            });
+        _mockJwtHandler.Setup(x => x.GetUserEmail(It.IsAny<StringValues>()))
+            .Returns("test@gmail.com");
+        _mockAccountService.Setup(x => x.GetUserByEmail(It.IsAny<string>()))
+            .ReturnsAsync(new User()
+            {
+                Id = userId
+            });
+
+        var result = _controller.SetBannerPicture(eventId, bannerId).Result;
+        var unauthorizedResult = Assert.IsType<UnauthorizedObjectResult>(result);
+        Assert.Equal(401, unauthorizedResult.StatusCode);
+    }
+
+    [Fact]
+    public void SetBannerPicture_WhenBannerPictureFileDoesNotExist_ReturnsBadRequest()
+    {
+        const int eventId = 1;
+        const string bannerId = "1";
+        const int userId = 1;
+        const int eventOwnerId = 1;
+
+        _mockEventService.Setup(x => x.DoesEventExist(It.IsAny<int>()))
+            .ReturnsAsync(true);
+        _mockEventService.Setup(x => x.GetEventById(It.IsAny<int>()))
+            .ReturnsAsync(new Event()
+            {
+                OwnerId = eventOwnerId
+            });
+        _mockJwtHandler.Setup(x => x.GetUserEmail(It.IsAny<StringValues>()))
+            .Returns("test@gmail.com");
+        _mockAccountService.Setup(x => x.GetUserByEmail(It.IsAny<string>()))
+            .ReturnsAsync(new User()
+            {
+                Id = userId
+            });
+        _mockFileService.Setup(x => x.DoesFileExist(It.IsAny<string>()))
+            .ReturnsAsync(false);
+
+        var result = _controller.SetBannerPicture(eventId, bannerId).Result;
+        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
+        Assert.Equal(400, badRequestResult.StatusCode);
+    }
+
+    [Fact]
+    public void SetBannerPicture_WhenBannerPictureFileIsNotImage_ReturnsBadRequest()
+    {
+        const int eventId = 1;
+        const string bannerId = "1";
+        const int userId = 1;
+        const int eventOwnerId = 1;
+
+        _mockEventService.Setup(x => x.DoesEventExist(It.IsAny<int>()))
+            .ReturnsAsync(true);
+        _mockEventService.Setup(x => x.GetEventById(It.IsAny<int>()))
+            .ReturnsAsync(new Event()
+            {
+                OwnerId = eventOwnerId
+            });
+        _mockJwtHandler.Setup(x => x.GetUserEmail(It.IsAny<StringValues>()))
+            .Returns("test@gmail.com");
+        _mockAccountService.Setup(x => x.GetUserByEmail(It.IsAny<string>()))
+            .ReturnsAsync(new User()
+            {
+                Id = userId
+            });
+        _mockFileService.Setup(x => x.DoesFileExist(It.IsAny<string>()))
+            .ReturnsAsync(true);
+        _mockFileService.Setup(x => x.IsFileTypeOfImage(It.IsAny<string>()))
+            .ReturnsAsync(false);
+
+        var result = _controller.SetBannerPicture(eventId, bannerId).Result;
+        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
+        Assert.Equal(400, badRequestResult.StatusCode);
+    }
+
+    [Fact]
+    public void SetBannerPicture_WhenBannerPictureIsNotSet_ReturnsBadRequest()
+    {
+        const int eventId = 1;
+        const string bannerId = "1";
+        const int userId = 1;
+        const int eventOwnerId = 1;
+
+        _mockEventService.Setup(x => x.DoesEventExist(It.IsAny<int>()))
+            .ReturnsAsync(true);
+        _mockEventService.Setup(x => x.GetEventById(It.IsAny<int>()))
+            .ReturnsAsync(new Event()
+            {
+                OwnerId = eventOwnerId
+            });
+        _mockJwtHandler.Setup(x => x.GetUserEmail(It.IsAny<StringValues>()))
+            .Returns("test@gmail.com");
+        _mockAccountService.Setup(x => x.GetUserByEmail(It.IsAny<string>()))
+            .ReturnsAsync(new User()
+            {
+                Id = userId
+            });
+        _mockFileService.Setup(x => x.DoesFileExist(It.IsAny<string>()))
+            .ReturnsAsync(true);
+        _mockFileService.Setup(x => x.IsFileTypeOfImage(It.IsAny<string>()))
+            .ReturnsAsync(true);
+        _mockEventService.Setup(x => x.SetBannerPicture(It.IsAny<int>(), It.IsAny<string>()))
+            .ReturnsAsync(false);
+
+        var result = _controller.SetBannerPicture(eventId, bannerId).Result;
+        var internalServerErrorResult = Assert.IsType<ObjectResult>(result);
+        Assert.Equal(500, internalServerErrorResult.StatusCode);
     }
 }
