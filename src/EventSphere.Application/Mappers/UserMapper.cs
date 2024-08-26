@@ -13,11 +13,11 @@ public static class UserMapper
     /// </summary>
     public static UserRegistrationResponseDto ToUserRegistrationResponseDto(this User user, string hostPath)
     {
-        string? profilePicturePath = null;
+        string? profilePictureUrl = null;
         if (user.ProfilePictureId != null)
         {
-            profilePicturePath = $"{hostPath}/files/{user.ProfilePictureId}";
+            profilePictureUrl = $"{hostPath}/files/{user.ProfilePictureId}";
         }
-        return new UserRegistrationResponseDto(user.Id, user.Username!, user.Email!, profilePicturePath);
+        return new UserRegistrationResponseDto(user.Id, user.Username!, user.Email!, profilePictureUrl);
     }
 }

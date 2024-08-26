@@ -8,7 +8,7 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace EventSphere.Application.Services;
 
-public class EventService(IMemoryCache cache, ApplicationDbContext appDbContext) : IEventService
+public class EventService(IMemoryCache cache, IFileService fileService, ApplicationDbContext appDbContext) : IEventService
 {
     private const string EventCachePrefix = "Event_";
     private static readonly TimeSpan EventCacheExpirationInMinutes = TimeSpan.FromMinutes(5);
@@ -24,6 +24,11 @@ public class EventService(IMemoryCache cache, ApplicationDbContext appDbContext)
 
         var eventEntry = await appDbContext.Events.AddAsync(eventObj);
         await appDbContext.SaveChangesAsync();
+
+        if (eventCreateRequestDto.BannerPictureId is not null)
+        {
+            fileService.FileIsUsed(eventCreateRequestDto.BannerPictureId);
+        }
 
         return eventEntry.Entity;
     }
@@ -66,6 +71,11 @@ public class EventService(IMemoryCache cache, ApplicationDbContext appDbContext)
         
         var cacheKey = EventCachePrefix + eventUpdateRequestDto.Id;
         cache.Remove(cacheKey);
+
+        if (eventUpdateRequestDto.BannerPictureId is not null)
+        {
+            fileService.FileIsUsed(eventUpdateRequestDto.BannerPictureId);
+        }
 
         return true;
     }
@@ -116,5 +126,22 @@ public class EventService(IMemoryCache cache, ApplicationDbContext appDbContext)
         query = query.Where(e => e.Date >= listEventsRequestDto.StartDate && e.Date <= listEventsRequestDto.EndDate);
 
         return await query.ToListAsync();
+    }
+
+    public async Task<bool> SetBannerPicture(int eventId, string id)
+    {
+        var eventObj = await appDbContext.Events.FirstOrDefaultAsync(x => x.Id == eventId);
+        if (eventObj is null) return false;
+        
+        eventObj.BannerPictureId = id;
+        appDbContext.Events.Update(eventObj);
+        await appDbContext.SaveChangesAsync();
+
+        fileService.FileIsUsed(id);
+        
+        var cacheKey = EventCachePrefix + eventId;
+        cache.Remove(cacheKey);
+        
+        return true;
     }
 }

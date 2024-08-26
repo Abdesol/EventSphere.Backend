@@ -8,6 +8,11 @@ public class Event
     public int Id { get; set; }
     
     /// <summary>
+    /// Id of the banner picture in the mongodb
+    /// </summary>
+    public string? BannerPictureId { get; set; }
+    
+    /// <summary>
     /// Title of the event
     /// </summary>
     public string? Title { get; set; }

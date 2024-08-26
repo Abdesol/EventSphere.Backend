@@ -6,6 +6,7 @@ using EventSphere.Common.Enums;
 using EventSphere.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
+using Moq;
 using DateTimeOffset = System.DateTimeOffset;
 
 namespace EventSphere.Tests.Application.Services;
@@ -14,9 +15,12 @@ public class EventServiceTests
 {
     private readonly IEventService _service;
     private readonly ApplicationDbContext _appDbContext;
+    private readonly Mock<IFileService> _mockFileService;
 
     public EventServiceTests()
     {
+        _mockFileService = new Mock<IFileService>();
+        
         var uniqueDatabaseName = Guid.NewGuid().ToString();
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
             .UseInMemoryDatabase(databaseName: uniqueDatabaseName)
@@ -25,7 +29,7 @@ public class EventServiceTests
         SeedDatabase();
         
         var cache = new MemoryCache(new MemoryCacheOptions());
-        _service = new EventService(cache, _appDbContext);
+        _service = new EventService(cache, _mockFileService.Object, _appDbContext);
     }
 
     private void SeedDatabase()

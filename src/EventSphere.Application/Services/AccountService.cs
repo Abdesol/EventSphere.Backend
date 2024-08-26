@@ -54,6 +54,11 @@ public class AccountService(IMemoryCache cache, IFileService fileService, JwtHan
         var userEntry = await appDbContext.Users.AddAsync(user);
         await appDbContext.SaveChangesAsync();
 
+        if (userRegistrationRequestDto.ProfilePictureId is not null)
+        {
+            fileService.FileIsUsed(userRegistrationRequestDto.ProfilePictureId);
+        }
+
         return userEntry.Entity;
     }
     

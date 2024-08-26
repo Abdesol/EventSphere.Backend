@@ -18,5 +18,5 @@ public record UserRegistrationResponseDto(
     int Id,
     [Required] string Email,
     [Required] string Username,
-    string? ProfilePicturePath
+    string? ProfilePictureUrl
 );

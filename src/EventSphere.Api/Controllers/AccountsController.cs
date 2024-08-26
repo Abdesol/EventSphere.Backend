@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using EventSphere.Application.Mappers;
 using EventSphere.Application.Services.Interfaces;
@@ -182,26 +183,32 @@ public class AccountsController(
     /// <param name="id"></param>
     /// <returns></returns>
     [Authorize]
-    [HttpGet("promote-to-event-organizer/{id:int}")]
-    public async Task<IActionResult> PromoteToEventOrganizer(int id)
+    [HttpGet("promote-to-event-organizer")]
+    public async Task<IActionResult> PromoteToEventOrganizer()
     {
-        if (!await accountService.DoesUserExist(id))
+        var userEmail = jwtHandler.GetUserEmail(Request.Headers.Authorization);
+        if (userEmail is null)
         {
-            return BadRequest("User id does not exist.");
+            return Unauthorized("Not able to find the email from the authentication token.");
         }
 
-        if (await accountService.IsUserAlreadyAnEventOrganizer(id))
+        var user = await accountService.GetUserByEmail(userEmail);
+
+        if (user is null)
+            return Unauthorized("Not able to authenticate you with the authentication token.");
+
+        if (await accountService.IsUserAlreadyAnEventOrganizer(user.Id))
         {
             return BadRequest("User is already an event organizer");
         }
 
-        var updateRoleSuccessful = await accountService.PromoteToEventOrganizer(id);
+        var updateRoleSuccessful = await accountService.PromoteToEventOrganizer(user.Id);
         if (!updateRoleSuccessful)
         {
             return UnprocessableEntity("Could not promote user to event organizer.");
         }
 
-        var newToken = await accountService.GenerateTokenByUserId(id);
+        var newToken = await accountService.GenerateTokenByUserId(user.Id);
         if (newToken is null)
         {
             return UnprocessableEntity("Could not create a new token");
@@ -213,11 +220,10 @@ public class AccountsController(
     /// <summary>
     /// An endpoint to set a profile picture for a user.
     /// </summary>
-    /// <param name="userId">the user id to set the profile picture to</param>
-    /// <param name="id">id of the profile picture</param>
+    /// <param name="pfpId">id of the profile picture</param>
     [Authorize]
     [HttpGet("set-profile-picture")]
-    public async Task<IActionResult> SetProfilePicture([FromQuery] string id)
+    public async Task<IActionResult> SetProfilePicture([FromQuery] [Required] string? pfpId)
     {
         var userEmail = jwtHandler.GetUserEmail(Request.Headers.Authorization);
         if (userEmail is null)
@@ -228,18 +234,18 @@ public class AccountsController(
         var user = await accountService.GetUserByEmail(userEmail);
 
         if (user is null)
-            return BadRequest("Not able to authenticate you with the authentication token.");
+            return Unauthorized("Not able to authenticate you with the authentication token.");
 
         var doesProfilePictureIdExist =
-            await fileService.DoesFileExist(id);
+            await fileService.DoesFileExist(pfpId!);
         if (!doesProfilePictureIdExist)
             return BadRequest("Profile picture id does not exist.");
 
-        var isFileTypeOfImage = await fileService.IsFileTypeOfImage(id);
+        var isFileTypeOfImage = await fileService.IsFileTypeOfImage(pfpId!);
         if (!isFileTypeOfImage)
             return BadRequest("Profile picture id is not an image type.");
 
-        var isSet = await accountService.SetProfilePicture(user.Id, id);
+        var isSet = await accountService.SetProfilePicture(user.Id, pfpId!);
         return isSet
             ? Ok("Profile picture updated successfully")
             : StatusCode(500, "An error occurred while setting the profile picture.");

@@ -54,4 +54,12 @@ public interface IEventService
     /// <param name="listEventsRequestDto">The filters request dto</param>
     /// <returns>A list of events based on the filters</returns>
     public Task<List<Event>> GetEvents(ListEventsRequestDto listEventsRequestDto);
+
+    /// <summary>
+    /// Sets the banner picture for the event
+    /// </summary>
+    /// <param name="eventId">id of the event</param>
+    /// <param name="id">the banner picture id in the database</param>
+    /// <returns>true if successfully set</returns>
+    public Task<bool> SetBannerPicture(int eventId, string id);
 }

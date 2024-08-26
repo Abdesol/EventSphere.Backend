@@ -12,6 +12,7 @@ public static class EventMapper
     {
         var eventObj = new Event
         {
+            BannerPictureId = eventCreateRequestDto.BannerPictureId,
             Title = eventCreateRequestDto.Title,
             Description = eventCreateRequestDto.Description,
             Location = eventCreateRequestDto.Location,
@@ -19,25 +20,33 @@ public static class EventMapper
             StartTime = eventCreateRequestDto.StartTime,
             EndTime = eventCreateRequestDto.EndTime
         };
-        
+
         if (id is not null)
             eventObj.Id = (int)id;
-        
+
         if (ownerId is not null)
             eventObj.OwnerId = (int)ownerId;
 
         return eventObj;
     }
 
-    public static EventCreateResponseDto ToEventCreateResponseDto(this Event eventEntity)
+    public static EventCreateResponseDto ToEventCreateResponseDto(this Event eventEntity, string hostPath)
     {
+        string? bannerPictureUrl = null;
+        if (eventEntity.BannerPictureId != null)
+        {
+            bannerPictureUrl = $"{hostPath}/files/{eventEntity.BannerPictureId}";
+        }
+
         return new EventCreateResponseDto(eventEntity.Id, eventEntity.Title!, eventEntity.Description!,
             eventEntity.Location!, eventEntity.OwnerId, eventEntity.Date, eventEntity.StartTime, eventEntity.EndTime,
-            eventEntity.EventTypes);
+            bannerPictureUrl, eventEntity.EventTypes);
     }
-    
-    public static ListEventsResponseDto ToEventListResponseDto(this List<Event> eventEntities)
+
+    public static ListEventsResponseDto ToEventListResponseDto(this List<Event> eventEntities, string hostPath)
     {
-        return new ListEventsResponseDto(eventEntities.ConvertAll(ToEventCreateResponseDto));
+        return new ListEventsResponseDto(
+            eventEntities.ConvertAll(eventEntity =>
+                eventEntity.ToEventCreateResponseDto(hostPath)));
     }
 }

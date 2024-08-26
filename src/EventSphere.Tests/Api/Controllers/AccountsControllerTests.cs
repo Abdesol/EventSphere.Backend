@@ -8,6 +8,7 @@ using EventSphere.Infrastructure.Security;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Primitives;
 using Moq;
 
 namespace EventSphere.Tests.Api.Controllers;
@@ -205,29 +206,20 @@ public class AccountsControllerTests
         var okResult = Assert.IsType<OkResult>(result);
         Assert.Equal(200, okResult.StatusCode);
     }
-
-    [Fact]
-    public async void PromoteToEventOrganizer_WhenUserDoesNotExist_ReturnsBadRequest()
-    {
-        var userId = 0;
-        _mockAccountService.Setup(x => x.DoesUserExist(userId))
-            .ReturnsAsync(false);
-
-        var result = await _controller.PromoteToEventOrganizer(userId);
-        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
-        Assert.Equal(400, badRequestResult.StatusCode);
-    }
     
     [Fact]
     public async void PromoteToEventOrganizer_WhenUserIsAlreadyAnEventOrganizer_ReturnsBadRequest()
     {
-        var userId = 0;
-        _mockAccountService.Setup(x => x.DoesUserExist(userId))
+        _mockAccountService.Setup(x => x.DoesUserExist(It.IsAny<int>()))
             .ReturnsAsync(true);
-        _mockAccountService.Setup(x => x.IsUserAlreadyAnEventOrganizer(userId))
+        _mockAccountService.Setup(x => x.IsUserAlreadyAnEventOrganizer(It.IsAny<int>()))
             .ReturnsAsync(true);
+        _mockAccountService.Setup(x => x.GetUserByEmail(It.IsAny<string>()))
+            .ReturnsAsync(new User());
+        _mockJwtHandler.Setup(x => x.GetUserEmail(It.IsAny<StringValues>()))
+            .Returns("test@gmail.com");
 
-        var result = await _controller.PromoteToEventOrganizer(userId);
+        var result = await _controller.PromoteToEventOrganizer();
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
         Assert.Equal(400, badRequestResult.StatusCode);
     }
@@ -235,15 +227,18 @@ public class AccountsControllerTests
     [Fact]
     public async void PromoteToEventOrganizer_WhenUpdateRoleIsNotSuccessful_ReturnsUnprocessableEntity()
     {
-        var userId = 0;
-        _mockAccountService.Setup(x => x.DoesUserExist(userId))
+        _mockAccountService.Setup(x => x.DoesUserExist(It.IsAny<int>()))
             .ReturnsAsync(true);
-        _mockAccountService.Setup(x => x.IsUserAlreadyAnEventOrganizer(userId))
+        _mockAccountService.Setup(x => x.IsUserAlreadyAnEventOrganizer(It.IsAny<int>()))
             .ReturnsAsync(false);
-        _mockAccountService.Setup(x => x.PromoteToEventOrganizer(userId))
+        _mockAccountService.Setup(x => x.PromoteToEventOrganizer(It.IsAny<int>()))
             .ReturnsAsync(false);
+        _mockAccountService.Setup(x => x.GetUserByEmail(It.IsAny<string>()))
+            .ReturnsAsync(new User());
+        _mockJwtHandler.Setup(x => x.GetUserEmail(It.IsAny<StringValues>()))
+            .Returns("test@gmail.com");
 
-        var result = await _controller.PromoteToEventOrganizer(userId);
+        var result = await _controller.PromoteToEventOrganizer();
         var unprocessableEntityResult = Assert.IsType<UnprocessableEntityObjectResult>(result);
         Assert.Equal(422, unprocessableEntityResult.StatusCode);
     }
@@ -251,17 +246,20 @@ public class AccountsControllerTests
     [Fact]
     public async void PromoteToEventOrganizer_WhenNotAbleToCreateNewToken_ReturnsUnprocessableEntity()
     {
-        var userId = 0;
-        _mockAccountService.Setup(x => x.DoesUserExist(userId))
+        _mockAccountService.Setup(x => x.DoesUserExist(It.IsAny<int>()))
             .ReturnsAsync(true);
-        _mockAccountService.Setup(x => x.IsUserAlreadyAnEventOrganizer(userId))
+        _mockAccountService.Setup(x => x.IsUserAlreadyAnEventOrganizer(It.IsAny<int>()))
             .ReturnsAsync(false);
-        _mockAccountService.Setup(x => x.PromoteToEventOrganizer(userId))
+        _mockAccountService.Setup(x => x.PromoteToEventOrganizer(It.IsAny<int>()))
             .ReturnsAsync(true);
-        _mockAccountService.Setup(x => x.GenerateTokenByUserId(userId))
+        _mockAccountService.Setup(x => x.GenerateTokenByUserId(It.IsAny<int>()))
             .ReturnsAsync((string?)null);
+        _mockAccountService.Setup(x => x.GetUserByEmail(It.IsAny<string>()))
+            .ReturnsAsync(new User());
+        _mockJwtHandler.Setup(x => x.GetUserEmail(It.IsAny<StringValues>()))
+            .Returns("test@gmail.com");
 
-        var result = await _controller.PromoteToEventOrganizer(userId);
+        var result = await _controller.PromoteToEventOrganizer();
         var unprocessableEntityResult = Assert.IsType<UnprocessableEntityObjectResult>(result);
         Assert.Equal(422, unprocessableEntityResult.StatusCode);
     }

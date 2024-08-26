@@ -9,5 +9,6 @@ public record EventCreateResponseDto(
     DateOnly Date,
     long StartTime,
     long EndTime,
+    string? BannerPictureUrl,
     List<string>? EventTypes = null!
     );
