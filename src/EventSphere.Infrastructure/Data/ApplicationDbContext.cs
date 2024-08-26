@@ -23,12 +23,18 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     /// </summary>
     public DbSet<Like> Likes { get; set; }
     
+    /// <summary>
+    /// The events comments table in the database
+    /// </summary>
+    public DbSet<Comment> Comments { get; set; }
+    
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
 
         ConfigureEvent(modelBuilder);
         ConfigureLike(modelBuilder);
+        ConfigureComment(modelBuilder);
     }
 
     private static void ConfigureEvent(ModelBuilder modelBuilder)
@@ -51,5 +57,21 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
             .HasOne<User>()
             .WithMany()
             .HasForeignKey(l => l.UserId);
+    }
+
+    private static void ConfigureComment(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Comment>()
+            .HasKey(c => c.Id);
+
+        modelBuilder.Entity<Comment>()
+            .HasOne<Event>()
+            .WithMany()
+            .HasForeignKey(c => c.EventId);
+
+        modelBuilder.Entity<Comment>()
+            .HasOne<User>()
+            .WithMany()
+            .HasForeignKey(c => c.UserId);
     }
 }
