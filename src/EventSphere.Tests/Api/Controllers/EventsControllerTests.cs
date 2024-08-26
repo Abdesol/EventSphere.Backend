@@ -243,6 +243,33 @@ public class EventsControllerTests
     }
 
     [Fact]
+    public void Update_WhenEventIdOwnerIdDoesNotMatchUserId_ReturnsBadRequest()
+    {
+        const int userId = 1;
+        const int eventOwnerId = 2; // different
+
+        _mockEventService.Setup(x => x.DoesEventExist(It.IsAny<int>()))
+            .ReturnsAsync(true);
+        _mockEventService.Setup(x => x.GetEventById(It.IsAny<int>()))
+            .ReturnsAsync(new Event()
+            {
+                OwnerId = eventOwnerId
+            });
+        _mockJwtHandler.Setup(x => x.GetUserEmail(It.IsAny<StringValues>()))
+            .Returns("test@gmail.com");
+        _mockAccountService.Setup(x => x.GetUserByEmail(It.IsAny<string>()))
+            .ReturnsAsync(new User()
+            {
+                Id = userId
+            });
+
+        var result = _controller.Update(_testEventUpdateRequestDto).Result;
+
+        var unauthorizedResult = Assert.IsType<UnauthorizedObjectResult>(result);
+        Assert.Equal(401, unauthorizedResult.StatusCode);
+    }
+
+    [Fact]
     public void Update_WhenEventIsUpdated_ReturnsOk()
     {
         const int userId = 0;
