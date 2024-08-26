@@ -441,4 +441,48 @@ public class EventsControllerTests
         var internalServerErrorResult = Assert.IsType<ObjectResult>(result);
         Assert.Equal(500, internalServerErrorResult.StatusCode);
     }
+
+    [Fact]
+    public void Like_WhenNotSuccessful_ReturnsBadRequest()
+    {
+        const int eventId = 1;
+        const int userId = 1;
+
+        _mockEventService.Setup(x => x.DoesEventExist(It.IsAny<int>()))
+            .ReturnsAsync(true);
+        _mockEventService.Setup(x => x.GetEventById(It.IsAny<int>()))
+            .ReturnsAsync(new Event());
+        _mockJwtHandler.Setup(x => x.GetUserEmail(It.IsAny<StringValues>()))
+            .Returns("test@gmail.com");
+        _mockAccountService.Setup(x => x.GetUserByEmail(It.IsAny<string>()))
+            .ReturnsAsync(new User());
+        _mockEventService.Setup(x => x.LikeEvent(It.IsAny<int>(), It.IsAny<int>()))
+            .ReturnsAsync((false, ""));
+
+        var result = _controller.Like(eventId).Result;
+        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
+        Assert.Equal(400, badRequestResult.StatusCode);
+    }
+
+    [Fact]
+    public void Unlike_WhenNotSuccessful_ReturnsBadRequest()
+    {
+        const int eventId = 1;
+        const int userId = 1;
+
+        _mockEventService.Setup(x => x.DoesEventExist(It.IsAny<int>()))
+            .ReturnsAsync(true);
+        _mockEventService.Setup(x => x.GetEventById(It.IsAny<int>()))
+            .ReturnsAsync(new Event());
+        _mockJwtHandler.Setup(x => x.GetUserEmail(It.IsAny<StringValues>()))
+            .Returns("test@gmail.com");
+        _mockAccountService.Setup(x => x.GetUserByEmail(It.IsAny<string>()))
+            .ReturnsAsync(new User());
+        _mockEventService.Setup(x => x.UnlikeEvent(It.IsAny<int>(), It.IsAny<int>()))
+            .ReturnsAsync((false, ""));
+
+        var result = _controller.Unlike(eventId).Result;
+        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
+        Assert.Equal(400, badRequestResult.StatusCode);
+    }
 }

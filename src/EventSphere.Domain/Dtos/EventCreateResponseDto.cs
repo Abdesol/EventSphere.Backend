@@ -10,5 +10,6 @@ public record EventCreateResponseDto(
     long StartTime,
     long EndTime,
     string? BannerPictureUrl,
+    int LikesCount,
     List<string>? EventTypes = null!
     );

@@ -8,7 +8,8 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace EventSphere.Application.Services;
 
-public class EventService(IMemoryCache cache, IFileService fileService, ApplicationDbContext appDbContext) : IEventService
+public class EventService(IMemoryCache cache, IFileService fileService, ApplicationDbContext appDbContext)
+    : IEventService
 {
     private const string EventCachePrefix = "Event_";
     private static readonly TimeSpan EventCacheExpirationInMinutes = TimeSpan.FromMinutes(5);
@@ -39,9 +40,12 @@ public class EventService(IMemoryCache cache, IFileService fileService, Applicat
         var eventObj = await appDbContext.Events.FindAsync(id);
         if (eventObj is null) return false;
 
+        var likes = appDbContext.Likes.Where(l => l.EventId == id);
+
         appDbContext.Events.Remove(eventObj);
+        appDbContext.Likes.RemoveRange(likes);
         await appDbContext.SaveChangesAsync();
-        
+
         var cacheKey = EventCachePrefix + id;
         cache.Remove(cacheKey);
 
@@ -68,7 +72,7 @@ public class EventService(IMemoryCache cache, IFileService fileService, Applicat
         }
 
         await appDbContext.SaveChangesAsync();
-        
+
         var cacheKey = EventCachePrefix + eventUpdateRequestDto.Id;
         cache.Remove(cacheKey);
 
@@ -91,23 +95,25 @@ public class EventService(IMemoryCache cache, IFileService fileService, Applicat
     public async Task<Event?> GetEventById(int id)
     {
         var cacheKey = EventCachePrefix + id;
-        
+
         if (cache.TryGetValue(cacheKey, out Event? cachedEvent))
         {
             return cachedEvent!;
         }
-        
+
         var eventObj = await appDbContext.Events.AsNoTracking().FirstOrDefaultAsync(e => e.Id == id);
-        
+
         if (eventObj is not null)
         {
+            eventObj.LikesCount = await appDbContext.Likes.AsNoTracking().CountAsync(l => l.EventId == id);
+            
             cache.Set(cacheKey, eventObj, new MemoryCacheEntryOptions
             {
                 AbsoluteExpirationRelativeToNow = EventCacheExpirationInMinutes,
                 SlidingExpiration = EventCacheSlidingExpirationInMinutes
             });
         }
-        
+
         return eventObj;
     }
 
@@ -122,26 +128,77 @@ public class EventService(IMemoryCache cache, IFileService fileService, Applicat
                     e.EventTypes != null &&
                     e.EventTypes.Any(et => listEventsRequestDto.EventTypes.Contains(et)));
         }
+        
+        var eventIds = await query.Select(e => e.Id).ToListAsync();
+        var likesCount = await appDbContext.Likes
+            .AsNoTracking()
+            .Where(l => eventIds.Contains(l.EventId))
+            .GroupBy(l => l.EventId)
+            .Select(g => new { EventId = g.Key, LikesCount = g.Count() })
+            .ToListAsync();
+        var likesCountDictionary = likesCount.ToDictionary(l => l.EventId, l => l.LikesCount);
+        
+        var events = await query.ToListAsync();
+        foreach (var eventObj in events)
+        {
+            eventObj.LikesCount = likesCountDictionary.GetValueOrDefault(eventObj.Id, 0);
+        }
 
-        query = query.Where(e => e.Date >= listEventsRequestDto.StartDate && e.Date <= listEventsRequestDto.EndDate);
-
-        return await query.ToListAsync();
+        return events;
     }
 
+    /// <inheritdoc />
     public async Task<bool> SetBannerPicture(int eventId, string id)
     {
         var eventObj = await appDbContext.Events.FirstOrDefaultAsync(x => x.Id == eventId);
         if (eventObj is null) return false;
-        
+
         eventObj.BannerPictureId = id;
         appDbContext.Events.Update(eventObj);
         await appDbContext.SaveChangesAsync();
 
         fileService.FileIsUsed(id);
+
+        var cacheKey = EventCachePrefix + eventId;
+        cache.Remove(cacheKey);
+
+        return true;
+    }
+
+    /// <inheritdoc />
+    public async Task<(bool, string?)> LikeEvent(int eventId, int userId)
+    {
+        var likeObj = await appDbContext.Likes.FirstOrDefaultAsync(l => l.EventId == eventId && l.UserId == userId);
+        if (likeObj is not null) return (false, "You have already liked this event.");
+        
+        var like = new Like()
+        {
+            EventId = eventId,
+            UserId = userId
+        };
+
+        await appDbContext.Likes.AddAsync(like);
+        await appDbContext.SaveChangesAsync();
         
         var cacheKey = EventCachePrefix + eventId;
         cache.Remove(cacheKey);
         
-        return true;
+        return (true, null);
+    }
+    
+    /// <inheritdoc />
+    public async Task<(bool, string?)> UnlikeEvent(int eventId, int userId)
+    {
+        var likeObj = await appDbContext.Likes.FirstOrDefaultAsync(l => l.EventId == eventId && l.UserId == userId);
+
+        if (likeObj is null) return (false, "You have not liked this event yet.");
+
+        appDbContext.Likes.Remove(likeObj);
+        await appDbContext.SaveChangesAsync();
+        
+        var cacheKey = EventCachePrefix + eventId;
+        cache.Remove(cacheKey);
+        
+        return (true, null);
     }
 }

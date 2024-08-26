@@ -40,7 +40,7 @@ public static class EventMapper
 
         return new EventCreateResponseDto(eventEntity.Id, eventEntity.Title!, eventEntity.Description!,
             eventEntity.Location!, eventEntity.OwnerId, eventEntity.Date, eventEntity.StartTime, eventEntity.EndTime,
-            bannerPictureUrl, eventEntity.EventTypes);
+            bannerPictureUrl, eventEntity.LikesCount, eventEntity.EventTypes);
     }
 
     public static ListEventsResponseDto ToEventListResponseDto(this List<Event> eventEntities, string hostPath)

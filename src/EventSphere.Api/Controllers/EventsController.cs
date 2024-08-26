@@ -3,6 +3,7 @@ using EventSphere.Application.Mappers;
 using EventSphere.Application.Services.Interfaces;
 using EventSphere.Common.Enums;
 using EventSphere.Domain.Dtos;
+using EventSphere.Domain.Entities;
 using EventSphere.Infrastructure.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -111,7 +112,7 @@ public class EventsController(
     [HttpGet("delete/{id:int}")]
     public async Task<IActionResult> Delete(int id)
     {
-        var (isVerified, output) = await VerifyUser(Request.Headers.Authorization, id);
+        var (isVerified, output, user, eventObj) = await VerifyUser(Request.Headers.Authorization, id);
         if (!isVerified)
             return output;
 
@@ -131,7 +132,7 @@ public class EventsController(
     [HttpPut("update")]
     public async Task<IActionResult> Update(EventUpdateRequestDto eventUpdateRequestDto)
     {
-        var (isVerified, output) = await VerifyUser(Request.Headers.Authorization, eventUpdateRequestDto.Id);
+        var (isVerified, output, user, eventObj) = await VerifyUser(Request.Headers.Authorization, eventUpdateRequestDto.Id);
         if (!isVerified)
             return output;
 
@@ -167,7 +168,7 @@ public class EventsController(
         [FromQuery] [Required] int? eventId,
         [FromQuery] [Required] string? bannerId)
     {
-        var (isVerified, output) = await VerifyUser(Request.Headers.Authorization, eventId!.Value);
+        var (isVerified, output, user, eventObj) = await VerifyUser(Request.Headers.Authorization, eventId!.Value);
         if (!isVerified)
             return output;
 
@@ -188,30 +189,69 @@ public class EventsController(
     }
 
     /// <summary>
+    /// An endpoint to like an event.
+    /// </summary>
+    /// <param name="eventId">id of the event the user is liking</param>
+    [Authorize]
+    [HttpGet("like")]
+    public async Task<IActionResult> Like([FromQuery] [Required] int? eventId)
+    {
+        var (isVerified, output, user, eventObj) = await VerifyUser(Request.Headers.Authorization, eventId!.Value, false);
+        if (!isVerified)
+            return output;
+
+        var (isSuccess, errorMessage) = await eventService.LikeEvent(eventId.Value, user!.Id);
+
+        if (!isSuccess) return BadRequest(errorMessage);
+
+        return Ok();
+    }
+
+    /// <summary>
+    /// An endpoint to unlike an event.
+    /// </summary>
+    /// <param name="eventId">id of the event the user is unliking</param>
+    [Authorize]
+    [HttpGet("unlike")]
+    public async Task<IActionResult> Unlike([FromQuery] [Required] int? eventId)
+    {
+        var (isVerified, output, user, eventObj) = await VerifyUser(Request.Headers.Authorization, eventId!.Value, false);
+        if (!isVerified)
+            return output;
+
+        var (isSuccess, errorMessage) = await eventService.UnlikeEvent(eventId.Value, user!.Id);
+
+        if (!isSuccess) return BadRequest(errorMessage);
+
+        return Ok();
+    }
+
+    /// <summary>
     /// A method to verify an event and a user
     /// </summary>
     /// <param name="authorization">the authorization header where we get user information from</param>
     /// <param name="eventId">the event id to verify against</param>
-    private async Task<(bool isSuccess, ObjectResult output)> VerifyUser(StringValues authorization, int eventId)
+    /// <param name="shouldBeOwner">indicates if it has to check for event id owner with user id match or not</param>
+    private async Task<(bool isSuccess, ObjectResult output, User? user, Event? eventObj)> VerifyUser(StringValues authorization, int eventId, bool shouldBeOwner = true)
     {
         var userEmail = jwtHandler.GetUserEmail(authorization);
         if (userEmail is null)
         {
-            return (false, Unauthorized("Not able to find the email from the authentication token."));
+            return (false, Unauthorized("Not able to find the email from the authentication token."), null, null);
         }
 
         var user = await accountService.GetUserByEmail(userEmail);
         if (user is null)
-            return (false, Unauthorized("Not able to authenticate you with the authentication token."));
+            return (false, Unauthorized("Not able to authenticate you with the authentication token."), null, null);
 
         var eventObj = await eventService.GetEventById(eventId);
 
         if (eventObj is null)
-            return (false, BadRequest("Event id doesn't exist."));
+            return (false, BadRequest("Event id doesn't exist."), user, null);
 
-        if (user.Id != eventObj.OwnerId)
-            return (false, Unauthorized("You are not the owner of the event."));
+        if (shouldBeOwner && user.Id != eventObj.OwnerId)
+            return (false, Unauthorized("You are not the owner of the event."), user, eventObj);
 
-        return (true, null!);
+        return (true, null!, user, eventObj);
     }
 }

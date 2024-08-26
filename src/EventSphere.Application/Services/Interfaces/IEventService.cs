@@ -47,7 +47,7 @@ public interface IEventService
     /// <param name="id">Id of the event</param>
     /// <returns>The event object if it exists, otherwise null</returns>
     public Task<Event?> GetEventById(int id);
-    
+
     /// <summary>
     /// Gets events based on the filter from the listRequestDto
     /// </summary>
@@ -62,4 +62,20 @@ public interface IEventService
     /// <param name="id">the banner picture id in the database</param>
     /// <returns>true if successfully set</returns>
     public Task<bool> SetBannerPicture(int eventId, string id);
+
+    /// <summary>
+    /// Likes the event
+    /// </summary>
+    /// <param name="eventId">the id of the event to like</param>
+    /// <param name="userId">the id of the user liking the event</param>
+    /// <returns>if liked successfully, it returns true and empty string, otherwise, if it is false, it returns false and the error in the string</returns>
+    public Task<(bool, string?)> LikeEvent(int eventId, int userId);
+    
+    /// <summary>
+    /// Unlikes the event
+    /// </summary>
+    /// <param name="eventId">the id of the event to unlike</param>
+    /// <param name="userId">the id of the user unliking the event</param>
+    /// <returns>if unliked successfully, it returns true and empty string, otherwise, if it is false, it returns false and the error in the string</returns>
+    public Task<(bool, string?)> UnlikeEvent(int eventId, int userId);
 }

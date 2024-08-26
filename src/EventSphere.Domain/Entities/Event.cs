@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace EventSphere.Domain.Entities;
 
 /// <summary>
@@ -51,4 +53,7 @@ public class Event
     /// Event ending time
     /// </summary>
     public long EndTime { get; set; }
+    
+    [NotMapped]
+    public int LikesCount { get; set; }
 }
