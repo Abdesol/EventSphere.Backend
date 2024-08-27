@@ -16,6 +16,7 @@ public class EventsControllerTests
     private readonly EventsController _controller;
     private readonly Mock<IAccountService> _mockAccountService;
     private readonly Mock<IEventService> _mockEventService;
+    private readonly Mock<ICommentService> _mockCommentService;
     private readonly Mock<IFileService> _mockFileService;
     private readonly Mock<JwtHandler> _mockJwtHandler;
 
@@ -23,6 +24,7 @@ public class EventsControllerTests
     {
         _mockAccountService = new Mock<IAccountService>();
         _mockEventService = new Mock<IEventService>();
+        _mockCommentService = new Mock<ICommentService>();
         _mockFileService = new Mock<IFileService>();
 
         var mockConfiguration = new Mock<IConfiguration>();
@@ -45,6 +47,7 @@ public class EventsControllerTests
 
         _controller = new EventsController(
             _mockEventService.Object,
+            _mockCommentService.Object,
             _mockFileService.Object,
             _mockAccountService.Object,
             _mockJwtHandler.Object

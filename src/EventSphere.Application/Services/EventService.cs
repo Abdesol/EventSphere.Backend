@@ -41,9 +41,11 @@ public class EventService(IMemoryCache cache, IFileService fileService, Applicat
         if (eventObj is null) return false;
 
         var likes = appDbContext.Likes.Where(l => l.EventId == id);
+        var comments = appDbContext.Comments.Where(l => l.EventId == id);
 
         appDbContext.Events.Remove(eventObj);
         appDbContext.Likes.RemoveRange(likes);
+        appDbContext.Comments.RemoveRange(comments);
         await appDbContext.SaveChangesAsync();
 
         var cacheKey = EventCachePrefix + id;

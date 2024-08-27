@@ -72,6 +72,7 @@ builder.Services.AddSingleton<JwtHandler>(); // jwt auth
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<IFileService, FileService>();
+builder.Services.AddScoped<ICommentService, CommentService>();
 
 builder.Services.AddMemoryCache();
 builder.Services.AddSingleton<ICacheService, MemoryCacheService>();

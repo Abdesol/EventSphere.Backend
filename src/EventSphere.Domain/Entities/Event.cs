@@ -54,6 +54,9 @@ public class Event
     /// </summary>
     public long EndTime { get; set; }
     
+    /// <summary>
+    /// The likes count for the event
+    /// </summary>
     [NotMapped]
     public int LikesCount { get; set; }
 }

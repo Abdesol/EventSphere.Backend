@@ -62,6 +62,9 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     private static void ConfigureComment(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Comment>()
+            .Ignore(e => e.User);
+        
+        modelBuilder.Entity<Comment>()
             .HasKey(c => c.Id);
 
         modelBuilder.Entity<Comment>()

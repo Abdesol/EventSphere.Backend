@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations.Schema;
+
 namespace EventSphere.Domain.Entities;
 
 /// <summary>
@@ -25,10 +27,16 @@ public class Comment
     /// <summary>
     /// The date and time the comment is created
     /// </summary>
-    public DateTime CreatedAt { get; set; }
+    public long CreatedAt { get; set; }
     
     /// <summary>
     /// The date and time the comment is updated
     /// </summary>
-    public DateTime UpdatedAt { get; set; }
+    public long UpdatedAt { get; set; }
+    
+    /// <summary>
+    /// The user object for the comment
+    /// </summary>
+    [NotMapped]
+    public User? User { get; set; }
 }

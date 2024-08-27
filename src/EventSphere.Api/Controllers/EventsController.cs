@@ -21,6 +21,7 @@ namespace EventSphere.Api.Controllers;
 [Route("[controller]")]
 public class EventsController(
     IEventService eventService,
+    ICommentService commentService,
     IFileService fileService,
     IAccountService accountService,
     JwtHandler jwtHandler)
@@ -31,7 +32,6 @@ public class EventsController(
     /// <summary>
     /// List the event types that are acceptable
     /// </summary>
-    /// <returns></returns>
     [HttpGet("event-types")]
     public IActionResult GetEventTypes()
     {
@@ -75,17 +75,9 @@ public class EventsController(
     [HttpPost("create")]
     public async Task<IActionResult> Create(EventCreateRequestDto eventCreateRequestDto)
     {
-        var userEmail = jwtHandler.GetUserEmail(Request.Headers.Authorization);
-        if (userEmail is null)
-        {
-            return Unauthorized("Not able to find the email from the authentication token.");
-        }
-
-        var user = await accountService.GetUserByEmail(userEmail);
-        if (user is null)
-        {
-            return Unauthorized("Not able to find the email associated in the authentication token.");
-        }
+        var (isVerified, output, user) = await VerifyUser(Request.Headers.Authorization);
+        if (!isVerified)
+            return output;
 
         if (eventCreateRequestDto.BannerPictureId is not null)
         {
@@ -99,7 +91,7 @@ public class EventsController(
                 return BadRequest("Banner picture id is not an image type.");
         }
 
-        var eventEntity = await eventService.Create(eventCreateRequestDto, user.Id);
+        var eventEntity = await eventService.Create(eventCreateRequestDto, user!.Id);
 
         var hostPath = $"{Request.Scheme}://{Request.Host}";
         return Created("", eventEntity.ToEventCreateResponseDto(hostPath));
@@ -109,15 +101,12 @@ public class EventsController(
     /// An endpoint to delete events.
     /// </summary>
     [Authorize(Roles = Role.EventOrganizer)]
-    [HttpGet("delete/{id:int}")]
+    [HttpDelete("delete/{id:int}")]
     public async Task<IActionResult> Delete(int id)
     {
-        var (isVerified, output, user, eventObj) = await VerifyUser(Request.Headers.Authorization, id);
+        var (isVerified, output, user, eventObj) = await VerifyUserForEvent(Request.Headers.Authorization, id);
         if (!isVerified)
             return output;
-
-        if (!await eventService.DoesEventExist(id))
-            return BadRequest("The id of the event is not found in the database");
 
         var isSuccessfulDelete = await eventService.Delete(id);
         if (isSuccessfulDelete) return Ok();
@@ -132,12 +121,10 @@ public class EventsController(
     [HttpPut("update")]
     public async Task<IActionResult> Update(EventUpdateRequestDto eventUpdateRequestDto)
     {
-        var (isVerified, output, user, eventObj) = await VerifyUser(Request.Headers.Authorization, eventUpdateRequestDto.Id);
+        var (isVerified, output, user, eventObj) =
+            await VerifyUserForEvent(Request.Headers.Authorization, eventUpdateRequestDto.Id);
         if (!isVerified)
             return output;
-
-        if (!await eventService.DoesEventExist(eventUpdateRequestDto.Id))
-            return BadRequest("The id of the event is not found in the database");
 
         if (eventUpdateRequestDto.BannerPictureId is not null)
         {
@@ -168,7 +155,8 @@ public class EventsController(
         [FromQuery] [Required] int? eventId,
         [FromQuery] [Required] string? bannerId)
     {
-        var (isVerified, output, user, eventObj) = await VerifyUser(Request.Headers.Authorization, eventId!.Value);
+        var (isVerified, output, user, eventObj) =
+            await VerifyUserForEvent(Request.Headers.Authorization, eventId!.Value);
         if (!isVerified)
             return output;
 
@@ -196,7 +184,8 @@ public class EventsController(
     [HttpGet("like")]
     public async Task<IActionResult> Like([FromQuery] [Required] int? eventId)
     {
-        var (isVerified, output, user, eventObj) = await VerifyUser(Request.Headers.Authorization, eventId!.Value, false);
+        var (isVerified, output, user, eventObj) =
+            await VerifyUserForEvent(Request.Headers.Authorization, eventId!.Value, false);
         if (!isVerified)
             return output;
 
@@ -215,7 +204,8 @@ public class EventsController(
     [HttpGet("unlike")]
     public async Task<IActionResult> Unlike([FromQuery] [Required] int? eventId)
     {
-        var (isVerified, output, user, eventObj) = await VerifyUser(Request.Headers.Authorization, eventId!.Value, false);
+        var (isVerified, output, user, eventObj) =
+            await VerifyUserForEvent(Request.Headers.Authorization, eventId!.Value, false);
         if (!isVerified)
             return output;
 
@@ -227,22 +217,103 @@ public class EventsController(
     }
 
     /// <summary>
+    /// An endpoint to get comments of an event.
+    /// </summary>
+    /// <param name="eventId">id of the event to get comments from</param>
+    [Authorize]
+    [HttpGet("get-comments")]
+    public async Task<IActionResult> GetComments([FromQuery] [Required] int? eventId)
+    {
+        var comments = await commentService.GetComments(eventId!.Value);
+
+        var hostPath = $"{Request.Scheme}://{Request.Host}";
+        return Ok(comments.ToGetCommentsResponseDto(hostPath));
+    }
+
+    /// <summary>
+    /// An endpoint to comment on an event.
+    /// </summary>
+    [Authorize]
+    [HttpPost("comment")]
+    public async Task<IActionResult> Comment(CommentRequestDto commentRequestDto)
+    {
+        var (isVerified, output, user) = await VerifyUser(Request.Headers.Authorization);
+        if (!isVerified)
+            return output;
+
+        var comment = await commentService.Create(commentRequestDto, user!.Id);
+        var hostPath = $"{Request.Scheme}://{Request.Host}";
+
+        return Created("", comment.ToResponseDto(hostPath));
+    }
+
+    /// <summary>
+    /// An endpoint to update a comment on an event.
+    /// </summary>
+    [Authorize]
+    [HttpPut("update-comment")]
+    public async Task<IActionResult> UpdateComment(CommentUpdateRequestDto commentUpdateRequestDto)
+    {
+        var (isVerified, output) =
+            await VerifyUserForComment(Request.Headers.Authorization, commentUpdateRequestDto.Id!.Value);
+        if (!isVerified)
+            return output;
+
+        var isSuccessfulUpdate = await commentService.Update(commentUpdateRequestDto);
+        if (isSuccessfulUpdate) return Ok();
+
+        return UnprocessableEntity("Not able to update the comment data");
+    }
+
+    /// <summary>
+    /// An endpoint to delete a comment on an event.
+    /// </summary>
+    [Authorize]
+    [HttpDelete("delete-comment")]
+    public async Task<IActionResult> DeleteComment([FromQuery] [Required] int? id, [FromQuery] [Required] int? eventId)
+    {
+        var (isVerified, output) = await VerifyUserForComment(Request.Headers.Authorization, id!.Value);
+        if (!isVerified)
+            return output;
+
+        var isSuccessfulDelete = await commentService.Delete(id.Value, eventId!.Value);
+        if (isSuccessfulDelete) return Ok();
+
+        return UnprocessableEntity("Not able to delete the comment data");
+    }
+
+    /// <summary>
+    /// A method to verify a user
+    /// </summary>
+    /// <param name="authorization">the authorization header where we get user information from</param>
+    private async Task<(bool isSuccess, ObjectResult output, User? user)> VerifyUser(StringValues authorization)
+    {
+        var userEmail = jwtHandler.GetUserEmail(authorization);
+        if (userEmail is null)
+        {
+            return (false, Unauthorized("Not able to find the email from the authentication token."), null);
+        }
+
+        var user = await accountService.GetUserByEmail(userEmail);
+        if (user is null)
+            return (false, Unauthorized("Not able to authenticate you with the authentication token."), null);
+
+        return (true, null!, user);
+    }
+
+    /// <summary>
     /// A method to verify an event and a user
     /// </summary>
     /// <param name="authorization">the authorization header where we get user information from</param>
     /// <param name="eventId">the event id to verify against</param>
     /// <param name="shouldBeOwner">indicates if it has to check for event id owner with user id match or not</param>
-    private async Task<(bool isSuccess, ObjectResult output, User? user, Event? eventObj)> VerifyUser(StringValues authorization, int eventId, bool shouldBeOwner = true)
+    private async Task<(bool isSuccess, ObjectResult output, User? user, Event? eventObj)> VerifyUserForEvent(
+        StringValues authorization, int eventId, bool shouldBeOwner = true)
     {
-        var userEmail = jwtHandler.GetUserEmail(authorization);
-        if (userEmail is null)
-        {
-            return (false, Unauthorized("Not able to find the email from the authentication token."), null, null);
-        }
+        var (isVerified, output, user) = await VerifyUser(authorization);
 
-        var user = await accountService.GetUserByEmail(userEmail);
-        if (user is null)
-            return (false, Unauthorized("Not able to authenticate you with the authentication token."), null, null);
+        if (!isVerified)
+            return (false, output, null, null);
 
         var eventObj = await eventService.GetEventById(eventId);
 
@@ -253,5 +324,29 @@ public class EventsController(
             return (false, Unauthorized("You are not the owner of the event."), user, eventObj);
 
         return (true, null!, user, eventObj);
+    }
+
+    /// <summary>
+    /// A method to verify a comment and user
+    /// </summary>
+    /// <param name="authorization">the authorization header where we get user information from</param>
+    /// <param name="commentId">the comment id to verify against</param>
+    private async Task<(bool isSuccess, ObjectResult output)> VerifyUserForComment(StringValues authorization,
+        int commentId)
+    {
+        var (isVerified, output, user) = await VerifyUser(authorization);
+
+        if (!isVerified)
+            return (false, output);
+
+        var comment = await commentService.GetCommentById(commentId);
+
+        if (comment is null)
+            return (false, BadRequest("Comment id doesn't exist."));
+
+        if (user.Id != comment.UserId)
+            return (false, Unauthorized("You are not the owner of the comment."));
+
+        return (true, null!);
     }
 }
