@@ -307,7 +307,7 @@ public class EventsControllerTests
     {
         const int eventId = 1;
         const string bannerId = "1";
-        
+
         _mockEventService.Setup(x => x.DoesEventExist(It.IsAny<int>()))
             .ReturnsAsync(false);
         _mockJwtHandler.Setup(x => x.GetUserEmail(It.IsAny<StringValues>()))
@@ -487,5 +487,216 @@ public class EventsControllerTests
         var result = _controller.Unlike(eventId).Result;
         var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
         Assert.Equal(400, badRequestResult.StatusCode);
+    }
+
+    [Fact]
+    public void GetComments_WhenEventIsNotFound_ReturnsBadRequest()
+    {
+        _mockEventService.Setup(x => x.DoesEventExist(It.IsAny<int>()))
+            .ReturnsAsync(false);
+
+        var result = _controller.GetComments(It.IsAny<int>()).Result;
+
+        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
+        Assert.Equal(400, badRequestResult.StatusCode);
+    }
+
+    [Fact]
+    public void GetComments_WhenEventIsFound_ReturnsOk()
+    {
+        _mockEventService.Setup(x => x.DoesEventExist(It.IsAny<int>()))
+            .ReturnsAsync(true);
+        _mockCommentService.Setup(x => x.GetComments(It.IsAny<int>()))
+            .ReturnsAsync([]);
+
+        var result = _controller.GetComments(It.IsAny<int>()).Result;
+
+        var okResult = Assert.IsType<OkObjectResult>(result);
+        Assert.Equal(200, okResult.StatusCode);
+    }
+
+    [Fact]
+    public void Comment_WhenEventIsNotFound_ReturnsBadRequest()
+    {
+        _mockJwtHandler.Setup(x => x.GetUserEmail(It.IsAny<StringValues>()))
+            .Returns("test@gmail.com");
+        _mockAccountService.Setup(x => x.GetUserByEmail(It.IsAny<string>()))
+            .ReturnsAsync(new User());
+        _mockEventService.Setup(x => x.DoesEventExist(It.IsAny<int>()))
+            .ReturnsAsync(false);
+
+        var result = _controller.Comment(new CommentRequestDto(0, "")).Result;
+
+        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
+        Assert.Equal(400, badRequestResult.StatusCode);
+    }
+
+    [Fact]
+    public void Comment_WhenCommentIsCreated_ReturnsCreated()
+    {
+        _mockJwtHandler.Setup(x => x.GetUserEmail(It.IsAny<StringValues>()))
+            .Returns("test@gmail.com");
+        _mockAccountService.Setup(x => x.GetUserByEmail(It.IsAny<string>()))
+            .ReturnsAsync(new User());
+        _mockEventService.Setup(x => x.DoesEventExist(It.IsAny<int>()))
+            .ReturnsAsync(true);
+        _mockCommentService.Setup(x => x.Create(It.IsAny<CommentRequestDto>(), It.IsAny<int>()))
+            .ReturnsAsync(new Comment()
+            {
+                User = new User()
+            });
+
+        var result = _controller.Comment(new CommentRequestDto(0, "Test")).Result;
+
+        var createdResult = Assert.IsType<CreatedResult>(result);
+        Assert.Equal(201, createdResult.StatusCode);
+    }
+
+    [Fact]
+    public void DeleteComment_WhenCommentIsNotFound_ReturnsBadRequest()
+    {
+        _mockJwtHandler.Setup(x => x.GetUserEmail(It.IsAny<StringValues>()))
+            .Returns("test@gmail.com");
+        _mockAccountService.Setup(x => x.GetUserByEmail(It.IsAny<string>()))
+            .ReturnsAsync(new User());
+        _mockCommentService.Setup(x => x.GetCommentById(It.IsAny<int>()))
+            .ReturnsAsync((Comment?)null);
+
+        var result = _controller.DeleteComment(It.IsAny<int>(), It.IsAny<int>()).Result;
+
+        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
+        Assert.Equal(400, badRequestResult.StatusCode);
+    }
+
+    [Fact]
+    public void DeleteComment_WhenEventIdIsNotFound_ReturnsBadRequest()
+    {
+        _mockJwtHandler.Setup(x => x.GetUserEmail(It.IsAny<StringValues>()))
+            .Returns("test@gmail.com");
+        _mockAccountService.Setup(x => x.GetUserByEmail(It.IsAny<string>()))
+            .ReturnsAsync(new User());
+        _mockCommentService.Setup(x => x.GetCommentById(It.IsAny<int>()))
+            .ReturnsAsync(new Comment());
+        _mockEventService.Setup(x => x.DoesEventExist(It.IsAny<int>()))
+            .ReturnsAsync(false);
+
+        var result = _controller.DeleteComment(It.IsAny<int>(), It.IsAny<int>()).Result;
+
+        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
+        Assert.Equal(400, badRequestResult.StatusCode);
+    }
+
+    [Fact]
+    public void DeleteComment_WhenNotAbleToDelete_ReturnsUnprocessableEntity()
+    {
+        _mockJwtHandler.Setup(x => x.GetUserEmail(It.IsAny<StringValues>()))
+            .Returns("test@gmail.com");
+        _mockAccountService.Setup(x => x.GetUserByEmail(It.IsAny<string>()))
+            .ReturnsAsync(new User());
+        _mockCommentService.Setup(x => x.GetCommentById(It.IsAny<int>()))
+            .ReturnsAsync(new Comment());
+        _mockEventService.Setup(x => x.DoesEventExist(It.IsAny<int>()))
+            .ReturnsAsync(true);
+        _mockCommentService.Setup(x => x.Delete(It.IsAny<int>(), It.IsAny<int>()))
+            .ReturnsAsync(false);
+
+        var result = _controller.DeleteComment(It.IsAny<int>(), It.IsAny<int>()).Result;
+
+        var unprocessableEntityResult = Assert.IsType<UnprocessableEntityObjectResult>(result);
+        Assert.Equal(422, unprocessableEntityResult.StatusCode);
+    }
+
+    [Fact]
+    public void DeleteComment_WhenCommentIsDeleted_ReturnsOk()
+    {
+        _mockJwtHandler.Setup(x => x.GetUserEmail(It.IsAny<StringValues>()))
+            .Returns("test@gmail.com");
+        _mockAccountService.Setup(x => x.GetUserByEmail(It.IsAny<string>()))
+            .ReturnsAsync(new User());
+        _mockCommentService.Setup(x => x.GetCommentById(It.IsAny<int>()))
+            .ReturnsAsync(new Comment());
+        _mockEventService.Setup(x => x.DoesEventExist(It.IsAny<int>()))
+            .ReturnsAsync(true);
+        _mockCommentService.Setup(x => x.Delete(It.IsAny<int>(), It.IsAny<int>()))
+            .ReturnsAsync(true);
+        
+        var result = _controller.DeleteComment(It.IsAny<int>(), It.IsAny<int>()).Result;
+        
+        var okResult = Assert.IsType<OkResult>(result);
+        Assert.Equal(200, okResult.StatusCode);
+    }
+
+    [Fact]
+    public void UpdateComment_WhenCommentIsNotFound_ReturnsBadRequest()
+    {
+        _mockJwtHandler.Setup(x => x.GetUserEmail(It.IsAny<StringValues>()))
+            .Returns("test@gmail.com");
+        _mockAccountService.Setup(x => x.GetUserByEmail(It.IsAny<string>()))
+            .ReturnsAsync(new User());
+        _mockCommentService.Setup(x => x.GetCommentById(It.IsAny<int>()))
+            .ReturnsAsync((Comment?)null);
+
+        var result = _controller.UpdateComment(new CommentUpdateRequestDto(0, 0, "test")).Result;
+
+        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
+        Assert.Equal(400, badRequestResult.StatusCode);
+    }
+
+    [Fact]
+    public void UpdateComment_WhenEventIdIsNotFound_ReturnsBadRequest()
+    {
+        _mockJwtHandler.Setup(x => x.GetUserEmail(It.IsAny<StringValues>()))
+            .Returns("test@gmail.com");
+        _mockAccountService.Setup(x => x.GetUserByEmail(It.IsAny<string>()))
+            .ReturnsAsync(new User());
+        _mockCommentService.Setup(x => x.GetCommentById(It.IsAny<int>()))
+            .ReturnsAsync(new Comment());
+        _mockEventService.Setup(x => x.DoesEventExist(It.IsAny<int>()))
+            .ReturnsAsync(false);
+
+        var result = _controller.UpdateComment(new CommentUpdateRequestDto(0, 0, "test")).Result;
+
+        var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
+        Assert.Equal(400, badRequestResult.StatusCode);
+    }
+
+    [Fact]
+    public void UpdateComment_WhenNotAbleToUpdate_ReturnsUnprocessableEntity()
+    {
+        _mockJwtHandler.Setup(x => x.GetUserEmail(It.IsAny<StringValues>()))
+            .Returns("test@gmail.com");
+        _mockAccountService.Setup(x => x.GetUserByEmail(It.IsAny<string>()))
+            .ReturnsAsync(new User());
+        _mockCommentService.Setup(x => x.GetCommentById(It.IsAny<int>()))
+            .ReturnsAsync(new Comment());
+        _mockEventService.Setup(x => x.DoesEventExist(It.IsAny<int>()))
+            .ReturnsAsync(true);
+        _mockCommentService.Setup(x => x.Update(It.IsAny<CommentUpdateRequestDto>()))
+            .ReturnsAsync(false);
+
+        var result = _controller.UpdateComment(new CommentUpdateRequestDto(0, 0, "test")).Result;
+
+        var unprocessableEntityResult = Assert.IsType<UnprocessableEntityObjectResult>(result);
+        Assert.Equal(422, unprocessableEntityResult.StatusCode);
+    }
+
+    [Fact]
+    public void UpdateComment_WhenCommentIsUpdated_ReturnsOk()
+    {
+        _mockJwtHandler.Setup(x => x.GetUserEmail(It.IsAny<StringValues>()))
+            .Returns("test@gmail.com");
+        _mockAccountService.Setup(x => x.GetUserByEmail(It.IsAny<string>()))
+            .ReturnsAsync(new User());
+        _mockCommentService.Setup(x => x.GetCommentById(It.IsAny<int>()))
+            .ReturnsAsync(new Comment());
+        _mockEventService.Setup(x => x.DoesEventExist(It.IsAny<int>()))
+            .ReturnsAsync(true);
+        _mockCommentService.Setup(x => x.Update(It.IsAny<CommentUpdateRequestDto>()))
+            .ReturnsAsync(true);
+        
+        var result = _controller.UpdateComment(new CommentUpdateRequestDto(0, 0, "test")).Result;
+        
+        var okResult = Assert.IsType<OkResult>(result);
+        Assert.Equal(200, okResult.StatusCode);
     }
 }

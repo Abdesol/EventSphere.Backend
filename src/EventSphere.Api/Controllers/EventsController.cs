@@ -224,6 +224,9 @@ public class EventsController(
     [HttpGet("get-comments")]
     public async Task<IActionResult> GetComments([FromQuery] [Required] int? eventId)
     {
+        if (!await eventService.DoesEventExist(eventId!.Value))
+            return BadRequest("Event id doesn't exist.");
+        
         var comments = await commentService.GetComments(eventId!.Value);
 
         var hostPath = $"{Request.Scheme}://{Request.Host}";
@@ -241,6 +244,9 @@ public class EventsController(
         if (!isVerified)
             return output;
 
+        if (!await eventService.DoesEventExist(commentRequestDto.EventId!.Value))
+            return BadRequest("Event id doesn't exist.");
+        
         var comment = await commentService.Create(commentRequestDto, user!.Id);
         var hostPath = $"{Request.Scheme}://{Request.Host}";
 
@@ -259,6 +265,9 @@ public class EventsController(
         if (!isVerified)
             return output;
 
+        if (!await eventService.DoesEventExist(commentUpdateRequestDto.EventId!.Value))
+            return BadRequest("Event id doesn't exist.");
+
         var isSuccessfulUpdate = await commentService.Update(commentUpdateRequestDto);
         if (isSuccessfulUpdate) return Ok();
 
@@ -275,7 +284,10 @@ public class EventsController(
         var (isVerified, output) = await VerifyUserForComment(Request.Headers.Authorization, id!.Value);
         if (!isVerified)
             return output;
-
+        
+        if (!await eventService.DoesEventExist(eventId!.Value))
+            return BadRequest("Event id doesn't exist.");
+        
         var isSuccessfulDelete = await commentService.Delete(id.Value, eventId!.Value);
         if (isSuccessfulDelete) return Ok();
 
